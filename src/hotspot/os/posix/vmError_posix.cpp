@@ -38,6 +38,9 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #endif
+#ifdef SOLARIS
+#include <thread.h>
+#endif
 #ifdef AIX
 #include <unistd.h>
 #endif

@@ -571,6 +571,7 @@ void vm_exit(int code) {
 void notify_vm_shutdown() {
   // For now, just a dtrace probe.
   HOTSPOT_VM_SHUTDOWN();
+  HS_DTRACE_WORKAROUND_TAIL_CALL_BUG();
 }
 
 void vm_direct_exit(int code) {

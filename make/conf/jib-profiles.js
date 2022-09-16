@@ -239,7 +239,7 @@ var getJibProfilesCommon = function (input, data) {
 
     // List of the main profile names used for iteration
     common.main_profile_names = [
-        "linux-x64", "linux-x86", "macosx-x64",
+        "linux-x64", "linux-x86", "macosx-x64", "solaris-x64",
         "windows-x64", "windows-x86", "windows-aarch64",
         "linux-aarch64", "linux-arm32", "linux-ppc64le", "linux-s390x"
     ];
@@ -446,6 +446,14 @@ var getJibProfilesProfiles = function (input, common, data) {
                 "SETFILE=/usr/bin/SetFile"),
         },
 
+        "solaris-x64": {
+            target_os: "solaris",
+            target_cpu: "x64",
+            dependencies: ["devkit", "cups"],
+            configure_args: concat(common.configure_args_64bit,
+                "--with-zlib=system", "--enable-dtrace", "--enable-deprecated-ports=yes"),
+        },
+
         "windows-x64": {
             target_os: "windows",
             target_cpu: "x64",
@@ -548,7 +556,7 @@ var getJibProfilesProfiles = function (input, common, data) {
             "ANT_HOME": input.get("ant", "home_path")
         }
     };
-    [ "linux-x64", "macosx-x64", "windows-x64"]
+    [ "linux-x64", "macosx-x64", "solaris-x64", "windows-x64"]
         .forEach(function (name) {
             var maketestName = name + "-testmake";
             profiles[maketestName] = concatObjects(profiles[name], testmakeBase);
@@ -673,6 +681,9 @@ var getJibProfilesProfiles = function (input, common, data) {
         "macosx-x64": {
             platform: "osx-x64",
             jdk_subdir: "jdk-" + data.version +  ".jdk/Contents/Home",
+        },
+        "solaris-x64": {
+            platform: "solaris-x64",
         },
         "windows-x64": {
             platform: "windows-x64",
@@ -1030,6 +1041,7 @@ var getJibProfilesDependencies = function (input, common) {
     var devkit_platform_revisions = {
         linux_x64: "gcc10.2.0-OL6.4+1.0",
         macosx_x64: "Xcode11.3.1-MacOSX10.15+1.1",
+        solaris_x64: "SS12u4-Solaris11u1+1.0",
         windows_x64: "VS2019-16.7.2+1.1",
         linux_aarch64: "gcc10.2.0-OL7.6+1.0",
         linux_arm: "gcc8.2.0-Fedora27+1.0",

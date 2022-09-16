@@ -53,7 +53,14 @@ java.base_EXCLUDES += java/lang/doc-files
 # data files and shouldn't go in the product
 java.base_EXCLUDE_FILES += sun/text/resources/BreakIteratorRules.java
 
-ifeq ($(call isTargetOs, macosx aix), false)
+ifeq ($(call isTargetOs, solaris), false)
+  java.base_EXCLUDE_FILES += \
+      SolarisLoginModule.java \
+      SolarisSystem.java \
+      #
+endif
+
+ifeq ($(call isTargetOs, solaris macosx aix), false)
   java.base_EXCLUDE_FILES += sun/nio/fs/PollingWatchService.java
 endif
 

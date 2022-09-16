@@ -28,10 +28,14 @@ package sun.jvm.hotspot.utilities;
     system. */
 
 public class PlatformInfo {
-  /* Returns "win32" if Windows; "linux" if Linux. */
+  /* Returns "solaris" if on Solaris; "win32" if Windows; "linux" if
+     Linux. Used to determine location of dbx and import module, or
+     possible debugger agent on win32. */
   public static String getOS() throws UnsupportedPlatformException {
     String os = System.getProperty("os.name");
-    if (os.equals("Linux")) {
+    if (os.equals("SunOS")) {
+      return "solaris";
+    } else if (os.equals("Linux")) {
       return "linux";
     } else if (os.equals("FreeBSD")) {
       return "bsd";

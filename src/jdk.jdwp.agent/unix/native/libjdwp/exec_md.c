@@ -30,6 +30,14 @@
 #include "sys.h"
 #include "util.h"
 
+#if defined(LINUX) || defined(_ALLBSD_SOURCE) || defined(AIX)
+  /* Linux, BSD, AIX */
+  #define FORK() fork()
+#else
+  /* Solaris (make sure we always get the POSIX-specified behavior) */
+  #define FORK() fork1()
+#endif
+
 static char *skipWhitespace(char *p) {
     while ((*p != '\0') && isspace(*p)) {
         p++;
@@ -92,7 +100,7 @@ dbgsysExec(char *cmdLine)
     }
     argv[i] = NULL;  /* NULL terminate */
 
-    if ((pid = fork()) == 0) {
+    if ((pid = FORK()) == 0) {
         /* Child process */
         int i;
         long max_fd;

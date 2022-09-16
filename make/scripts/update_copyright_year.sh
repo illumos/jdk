@@ -26,7 +26,11 @@
 # Script to update the Copyright YEAR range in Mercurial sources.
 #  (Originally from xdono, Thanks!)
 
-awk=awk
+if [ "`uname -s`" = "SunOS" ] ; then
+  awk=nawk
+else
+  awk=awk
+fi
 
 # Stop on any error
 set -e

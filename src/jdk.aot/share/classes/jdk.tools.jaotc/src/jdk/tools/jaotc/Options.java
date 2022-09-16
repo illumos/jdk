@@ -72,6 +72,7 @@ final class Options {
 
         switch (osName) {
             case "Linux":
+            case "SunOS":
                 ext = "so";
                 break;
             case "Mac OS X":

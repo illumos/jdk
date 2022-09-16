@@ -94,12 +94,15 @@ public class ImagingLib {
                 public Boolean run() {
                     String arch = System.getProperty("os.arch");
 
-                    try {
-                        System.loadLibrary("mlib_image");
-                    } catch (UnsatisfiedLinkError e) {
-                        return Boolean.FALSE;
+                    if (arch == null || !arch.startsWith("sparc")) {
+                        try {
+                            System.loadLibrary("mlib_image");
+                        } catch (UnsatisfiedLinkError e) {
+                            return Boolean.FALSE;
+                        }
+
                     }
-                    boolean success = init();
+                    boolean success =  init();
                     return Boolean.valueOf(success);
                 }
             };

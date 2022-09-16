@@ -576,6 +576,8 @@ def _get_openjdk_os():
         os = 'macosx'
     elif 'linux' in os:
         os = 'linux'
+    elif 'solaris' in os:
+        os = 'solaris'
     elif 'cygwin' in os or 'mingw' in os:
         os = 'windows'
     return os

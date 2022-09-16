@@ -35,6 +35,8 @@
 AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
 [
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
+    C_FLAG_REORDER=''
+
     # Default works for linux, might work on other platforms as well.
     SHARED_LIBRARY_FLAGS='-shared'
     SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN[$]1'
@@ -43,6 +45,8 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
     SET_SHARED_LIBRARY_MAPFILE='-Wl,-version-script=[$]1'
 
   elif test "x$TOOLCHAIN_TYPE" = xclang; then
+    C_FLAG_REORDER=''
+
     if test "x$OPENJDK_TARGET_OS" = xmacosx; then
       # Linking is different on MacOSX
       SHARED_LIBRARY_FLAGS="-dynamiclib -compatibility_version 1.0.0 -current_version 1.0.0"
@@ -67,7 +71,16 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
       fi
     fi
 
+  elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
+    C_FLAG_REORDER='-xF'
+    SHARED_LIBRARY_FLAGS="-G"
+    SET_EXECUTABLE_ORIGIN='-R\$$ORIGIN[$]1'
+    SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
+    SET_SHARED_LIBRARY_NAME='-h [$]1'
+    SET_SHARED_LIBRARY_MAPFILE='-M[$]1'
+
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
+    C_FLAG_REORDER=''
     SHARED_LIBRARY_FLAGS="-qmkshrobj -bM:SRE -bnoentry"
     SET_EXECUTABLE_ORIGIN=""
     SET_SHARED_LIBRARY_ORIGIN=''
@@ -75,6 +88,7 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
     SET_SHARED_LIBRARY_MAPFILE=''
 
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
+    C_FLAG_REORDER=''
     SHARED_LIBRARY_FLAGS="-dll"
     SET_EXECUTABLE_ORIGIN=''
     SET_SHARED_LIBRARY_ORIGIN=''
@@ -82,6 +96,7 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
     SET_SHARED_LIBRARY_MAPFILE='-def:[$]1'
   fi
 
+  AC_SUBST(C_FLAG_REORDER)
   AC_SUBST(SET_EXECUTABLE_ORIGIN)
   AC_SUBST(SET_SHARED_LIBRARY_ORIGIN)
   AC_SUBST(SET_SHARED_LIBRARY_NAME)
@@ -380,6 +395,9 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   if test "x$OPENJDK_TARGET_OS" = xlinux; then
     CFLAGS_OS_DEF_JVM="-DLINUX"
     CFLAGS_OS_DEF_JDK="-D_GNU_SOURCE -D_REENTRANT -D_LARGEFILE64_SOURCE"
+  elif test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    CFLAGS_OS_DEF_JVM="-DSOLARIS"
+    CFLAGS_OS_DEF_JDK="-D__solaris__"
   elif test "x$OPENJDK_TARGET_OS" = xmacosx; then
     CFLAGS_OS_DEF_JVM="-D_ALLBSD_SOURCE -D_DARWIN_C_SOURCE -D_XOPEN_SOURCE"
     CFLAGS_OS_DEF_JDK="-D_ALLBSD_SOURCE -D_DARWIN_UNLIMITED_SELECT"
@@ -415,6 +433,9 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   # Setup debug/release defines
   if test "x$DEBUG_LEVEL" = xrelease; then
     DEBUG_CFLAGS_JDK="-DNDEBUG"
+    if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+      DEBUG_CFLAGS_JDK="$DEBUG_CFLAGS_JDK -DTRIMMED"
+    fi
   else
     DEBUG_CFLAGS_JDK="-DDEBUG"
 

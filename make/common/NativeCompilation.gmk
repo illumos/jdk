@@ -469,6 +469,7 @@ endef
 #   RCFLAGS flags for RC.
 #   EMBED_MANIFEST if true, embed manifest on Windows.
 #   MAPFILE mapfile
+#   REORDER reorder file
 #   USE_MAPFILE_FOR_SYMBOLS if true and this is a STATIC_BUILD, just copy the
 #       mapfile for the output symbols file
 #   CC the compiler to use, default is $(CC)
@@ -706,6 +707,11 @@ define SetupNativeCompilationBody
     $1_EXTRA_ASFLAGS += $$(ASFLAGS_DEBUG_SYMBOLS)
   endif
 
+  ifneq ($$($1_REORDER), )
+    $1_EXTRA_CFLAGS += $$(C_FLAG_REORDER)
+    $1_EXTRA_CXXFLAGS += $$(C_FLAG_REORDER)
+  endif
+
   # Pass the library name for static JNI library naming
   ifeq ($$($1_TYPE), STATIC_LIBRARY)
     $1_EXTRA_CFLAGS += -DLIBRARY_NAME=$$($1_NAME)
@@ -739,6 +745,7 @@ define SetupNativeCompilationBody
   ifeq ($$($1_WARNINGS_AS_ERRORS_$(TOOLCHAIN_TYPE)), true)
     $1_EXTRA_CFLAGS += $(CFLAGS_WARNINGS_ARE_ERRORS)
     $1_EXTRA_CXXFLAGS += $(CFLAGS_WARNINGS_ARE_ERRORS)
+    $1_EXTRA_LDFLAGS += $(LDFLAGS_WARNINGS_ARE_ERRORS)
   endif
 
   ifeq (NONE, $$($1_OPTIMIZATION))
@@ -932,6 +939,17 @@ define SetupNativeCompilationBody
 
   ifneq ($(DISABLE_MAPFILES), true)
     $1_REAL_MAPFILE := $$($1_MAPFILE)
+    ifeq ($(call isTargetOs, windows), false)
+      ifneq ($$($1_REORDER), )
+        $1_REAL_MAPFILE := $$($1_OBJECT_DIR)/mapfile
+
+        $$($1_REAL_MAPFILE) : $$($1_MAPFILE) $$($1_REORDER)
+		$$(call MakeDir, $$(@D))
+		$$(CP) $$($1_MAPFILE) $$@.tmp
+		$$(SED) -e 's=OUTPUTDIR=$$($1_OBJECT_DIR)=' $$($1_REORDER) >> $$@.tmp
+		$$(MV) $$@.tmp $$@
+      endif
+    endif
   endif
 
   # Pickup extra OPENJDK_TARGET_OS_TYPE and/or OPENJDK_TARGET_OS dependent variables
@@ -965,7 +983,7 @@ define SetupNativeCompilationBody
           $1_DEBUGINFO_FILES := $$($1_SYMBOLS_DIR)/$$($1_NOSUFFIX).pdb \
               $$($1_SYMBOLS_DIR)/$$($1_NOSUFFIX).map
 
-        else ifeq ($(call isTargetOs, linux), true)
+        else ifeq ($(call isTargetOs, linux solaris), true)
           $1_DEBUGINFO_FILES := $$($1_SYMBOLS_DIR)/$$($1_NOSUFFIX).debuginfo
           # Setup the command line creating debuginfo files, to be run after linking.
           # It cannot be run separately since it updates the original target file
@@ -1099,7 +1117,7 @@ define SetupNativeCompilationBody
     endif
 
     $1_VARDEPS := $$($1_LD) $$($1_SYSROOT_LDFLAGS) $$($1_LDFLAGS) $$($1_EXTRA_LDFLAGS) \
-        $$($1_LIBS) $$($1_EXTRA_LIBS) $$($1_MT) \
+        $$(GLOBAL_LIBS) $$($1_LIBS) $$($1_EXTRA_LIBS) $$($1_MT) \
         $$($1_CREATE_DEBUGINFO_CMDS) $$($1_MANIFEST_VERSION) \
         $$($1_STRIP_CMD)
     $1_VARDEPS_FILE := $$(call DependOnVariable, $1_VARDEPS, \
@@ -1158,7 +1176,7 @@ define SetupNativeCompilationBody
 
 		  $$(call ExecuteWithLog, $$($1_OBJECT_DIR)/$$($1_SAFE_NAME)_link, \
 		      $$($1_LD) $$($1_LDFLAGS) $$($1_EXTRA_LDFLAGS) $$($1_SYSROOT_LDFLAGS) \
-		          $(LD_OUT_OPTION)$$($1_TARGET) $$($1_LD_OBJ_ARG) $$($1_RES) \
+		          $(LD_OUT_OPTION)$$($1_TARGET) $$($1_LD_OBJ_ARG) $$($1_RES) $$(GLOBAL_LIBS) \
 		          $$($1_LIBS) $$($1_EXTRA_LIBS)) \
 		      | $(GREP) -v "^   Creating library .*\.lib and object .*\.exp" || \
 		          test "$$$$?" = "1" ; \
@@ -1171,7 +1189,7 @@ define SetupNativeCompilationBody
 		  $$(call ExecuteWithLog, $$($1_OBJECT_DIR)/$$($1_SAFE_NAME)_link, \
 		      $$(if $$($1_LINK_OBJS_RELATIVE), $$(CD) $$(OUTPUTDIR) ; ) \
 		      $$($1_LD) $$($1_LDFLAGS) $$($1_EXTRA_LDFLAGS) $$($1_SYSROOT_LDFLAGS) \
-		          $(LD_OUT_OPTION)$$($1_TARGET) $$($1_LD_OBJ_ARG) $$($1_RES) \
+		          $(LD_OUT_OPTION)$$($1_TARGET) $$($1_LD_OBJ_ARG) $$($1_RES) $$(GLOBAL_LIBS) \
 		          $$($1_LIBS) $$($1_EXTRA_LIBS)) ; \
 		  $$($1_CREATE_DEBUGINFO_CMDS)
 		  $$($1_STRIP_CMD)
