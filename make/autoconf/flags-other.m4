@@ -127,7 +127,10 @@ AC_DEFUN([FLAGS_SETUP_ASFLAGS],
 AC_DEFUN([FLAGS_SETUP_ASFLAGS_CPU_DEP],
 [
   # Misuse EXTRA_CFLAGS to mimic old behavior
+  # Skip on Solaris, otherwise -m64 leaks into GNU as, which is invalid.
+ if test "x$OPENJDK_TARGET_OS" != xsolaris; then
   $2JVM_ASFLAGS="$JVM_BASIC_ASFLAGS ${$2EXTRA_CFLAGS}"
+ fi
 
   AC_SUBST($2JVM_ASFLAGS)
 ])
