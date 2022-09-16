@@ -88,13 +88,6 @@ AC_DEFUN_ONCE([LIB_SETUP_X11],
       AC_MSG_ERROR([Could not find X11 libraries. $HELP_MSG])
     fi
 
-    if test "x$OPENJDK_TARGET_OS" = xsolaris; then
-      OPENWIN_HOME="/usr/openwin"
-      X_CFLAGS="-I$SYSROOT$OPENWIN_HOME/include -I$SYSROOT$OPENWIN_HOME/include/X11/extensions"
-      X_LIBS="-L$SYSROOT$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR \
-          -R$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR"
-    fi
-
     AC_LANG_PUSH(C)
     OLD_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS $SYSROOT_CFLAGS $X_CFLAGS"

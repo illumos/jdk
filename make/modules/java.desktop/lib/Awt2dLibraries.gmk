@@ -465,7 +465,11 @@ else
     HARFBUZZ_CFLAGS += -DHAVE_INTEL_ATOMIC_PRIMITIVES
   endif
   ifeq ($(call isTargetOs, solaris), true)
+   ifeq ($(TOOLCHAIN_TYPE), gcc)
+    HARFBUZZ_CFLAGS += -DHAVE_INTEL_ATOMIC_PRIMITIVES
+   else
     HARFBUZZ_CFLAGS += -DHAVE_SOLARIS_ATOMIC_OPS
+   endif
   endif
   ifeq ($(call isTargetOs, macosx), true)
     HARFBUZZ_CFLAGS += -DHAVE_CORETEXT

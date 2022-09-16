@@ -34,14 +34,14 @@ extern "C" {
 
 inline void Prefetch::read (void *loc, intx interval) {
 #ifdef AMD64
-  _Prefetch_read(loc, interval);
+  __asm__ ("prefetcht0 (%0,%1,1)" : : "r" (loc), "r" (interval));
 #endif // AMD64
 }
 
 // Use of this method should be gated by VM_Version::has_prefetchw.
 inline void Prefetch::write(void *loc, intx interval) {
 #ifdef AMD64
-  _Prefetch_write(loc, interval);
+  __asm__ ("prefetcht0 (%0,%1,1)" : : "r" (loc), "r" (interval));
 #endif // AMD64
 }
 
