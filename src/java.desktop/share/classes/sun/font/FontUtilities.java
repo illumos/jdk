@@ -41,6 +41,8 @@ import sun.util.logging.PlatformLogger;
 @SuppressWarnings("removal")
 public final class FontUtilities {
 
+    public static boolean isSolaris;
+
     public static boolean isLinux;
 
     public static boolean isMacOSX;
@@ -62,6 +64,7 @@ public final class FontUtilities {
             @Override
             public Object run() {
                 String osName = System.getProperty("os.name", "unknownOS");
+                isSolaris = osName.startsWith("SunOS");
 
                 isLinux = osName.startsWith("Linux");
 

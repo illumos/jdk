@@ -196,7 +196,7 @@ $(NET_PROPERTIES_DST): $(NET_PROPERTIES_SRCS)
 
 TARGETS += $(NET_PROPERTIES_DST)
 
-ifeq ($(call isTargetOs, linux), true)
+ifeq ($(call isTargetOs, solaris linux), true)
   $(eval $(call SetupCopyFiles, COPY_SDP_CONF, \
       FILES := $(TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_TYPE)/conf/sdp/sdp.conf.template, \
       DEST := $(CONF_DST_DIR)/sdp, \
