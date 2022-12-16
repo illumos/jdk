@@ -1334,14 +1334,6 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   return NULL;
 }
 
-void* os::dll_lookup(void* handle, const char* name) {
-  return dlsym(handle, name);
-}
-
-void* os::get_default_process_handle() {
-  return (void*)::dlopen(NULL, RTLD_LAZY);
-}
-
 static inline time_t get_mtime(const char* filename) {
   struct stat st;
   int ret = os::stat(filename, &st);
@@ -2147,13 +2139,6 @@ bool os::can_execute_large_page_memory() {
   return true;
 }
 
-// Sleep forever; naked call to OS-specific sleep; use with CAUTION
-void os::infinite_sleep() {
-  while (true) {    // sleep forever ...
-    ::sleep(100);   // ... 100 seconds at a time
-  }
-}
-
 // Used to convert frequent JVM_Yield() to nops
 bool os::dont_yield() {
   if (DontYieldALot) {
@@ -2655,28 +2640,6 @@ OSReturn os::get_native_priority(const Thread* const thread,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void os::print_statistics() {
-}
-
-bool os::message_box(const char* title, const char* message) {
-  int i;
-  fdStream err(defaultStream::error_fd());
-  for (i = 0; i < 78; i++) err.print_raw("=");
-  err.cr();
-  err.print_raw_cr(title);
-  for (i = 0; i < 78; i++) err.print_raw("-");
-  err.cr();
-  err.print_raw_cr(message);
-  for (i = 0; i < 78; i++) err.print_raw("=");
-  err.cr();
-
-  char buf[16];
-  // Prevent process from exiting upon "read error" without consuming all CPU
-  while (::read(0, buf, sizeof(buf)) <= 0) { ::sleep(100); }
-
-  return buf[0] == 'y' || buf[0] == 'Y';
-}
-
 // This does not do anything on Solaris. This is basically a hook for being
 // able to use structured exception handling (thread-local exception filters) on, e.g., Win32.
 void os::os_exception_wrapper(java_call_t f, JavaValue* value,
@@ -2975,25 +2938,6 @@ jint os::init_2(void) {
   os::Posix::init_2();
 
   return JNI_OK;
-}
-
-// Is a (classpath) directory empty?
-bool os::dir_is_empty(const char* path) {
-  DIR *dir = NULL;
-  struct dirent *ptr;
-
-  dir = opendir(path);
-  if (dir == NULL) return true;
-
-  // Scan the directory
-  bool result = true;
-  while (result && (ptr = readdir(dir)) != NULL) {
-    if (strcmp(ptr->d_name, ".") != 0 && strcmp(ptr->d_name, "..") != 0) {
-      result = false;
-    }
-  }
-  closedir(dir);
-  return result;
 }
 
 // This code originates from JDK's sysOpen and open64_w
