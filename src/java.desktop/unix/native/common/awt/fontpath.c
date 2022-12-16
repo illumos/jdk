@@ -583,6 +583,7 @@ typedef FcFontSet* (*FcFontSortFuncType)(FcConfig *config,
                                          FcResult *result);
 typedef FcCharSet* (*FcCharSetUnionFuncType)(const FcCharSet *a,
                                              const FcCharSet *b);
+typedef FcCharSet* (*FcCharSetDestroyFuncType)(FcCharSet *fcs);
 typedef FcChar32 (*FcCharSetSubtractCountFuncType)(const FcCharSet *a,
                                                    const FcCharSet *b);
 
@@ -868,6 +869,7 @@ Java_sun_font_FontConfigManager_getFontConfig
     FcFontSortFuncType FcFontSort;
     FcFontSetDestroyFuncType FcFontSetDestroy;
     FcCharSetUnionFuncType FcCharSetUnion;
+    FcCharSetDestroyFuncType FcCharSetDestroy;
     FcCharSetSubtractCountFuncType FcCharSetSubtractCount;
     FcGetVersionFuncType FcGetVersion;
     FcConfigGetCacheDirsFuncType FcConfigGetCacheDirs;
@@ -947,6 +949,8 @@ Java_sun_font_FontConfigManager_getFontConfig
         (FcFontSetDestroyFuncType)dlsym(libfontconfig, "FcFontSetDestroy");
     FcCharSetUnion =
         (FcCharSetUnionFuncType)dlsym(libfontconfig, "FcCharSetUnion");
+    FcCharSetDestroy =
+        (FcCharSetDestroyFuncType)dlsym(libfontconfig, "FcCharSetDestroy");
     FcCharSetSubtractCount =
         (FcCharSetSubtractCountFuncType)dlsym(libfontconfig,
                                               "FcCharSetSubtractCount");
@@ -962,6 +966,7 @@ Java_sun_font_FontConfigManager_getFontConfig
         FcPatternGetCharSet  == NULL ||
         FcFontSetDestroy     == NULL ||
         FcCharSetUnion       == NULL ||
+        FcCharSetDestroy     == NULL ||
         FcGetVersion         == NULL ||
         FcCharSetSubtractCount == NULL) {/* problem with the library: return.*/
         closeFontConfig(libfontconfig, JNI_FALSE);
@@ -1027,6 +1032,7 @@ Java_sun_font_FontConfigManager_getFontConfig
         FcChar8 **family, **styleStr, **fullname, **file;
         jarray fcFontArr = NULL;
         FcCharSet *unionCharset = NULL;
+        FcCharSet *prevUnionCharset = NULL;
 
         fcCompFontObj = (*env)->GetObjectArrayElement(env, fcCompFontArray, i);
         fcNameStr =
@@ -1140,6 +1146,9 @@ Java_sun_font_FontConfigManager_getFontConfig
                 free(file);
                 (*FcPatternDestroy)(pattern);
                 (*FcFontSetDestroy)(fontset);
+                if (prevUnionCharset != NULL) {
+                    (*FcCharSetDestroy)(prevUnionCharset);
+                }
                 closeFontConfig(libfontconfig, JNI_FALSE);
                 if (locale) {
                     (*env)->ReleaseStringUTFChars(env, localeStr, (const char*)locale);
@@ -1161,6 +1170,10 @@ Java_sun_font_FontConfigManager_getFontConfig
                 if ((*FcCharSetSubtractCount)(charset, unionCharset)
                     > minGlyphs) {
                     unionCharset = (* FcCharSetUnion)(unionCharset, charset);
+                    if (prevUnionCharset != NULL) {
+                      (*FcCharSetDestroy)(prevUnionCharset);
+                    }
+                    prevUnionCharset = unionCharset;
                 } else {
                     continue;
                 }
@@ -1177,6 +1190,11 @@ Java_sun_font_FontConfigManager_getFontConfig
             if (fontCount == 254) {
                 break; // CompositeFont will only use up to 254 slots from here.
             }
+        }
+
+        // Release last instance of CharSet union
+        if (prevUnionCharset != NULL) {
+          (*FcCharSetDestroy)(prevUnionCharset);
         }
 
         /* Once we get here 'fontCount' is the number of returned fonts
