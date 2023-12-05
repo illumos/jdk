@@ -45,6 +45,7 @@
   return _result; \
 } while(false)
 
+#ifndef SOLARIS
 // Aix does not have NUMA support but need these for compilation.
 inline bool os::numa_has_static_binding()   { AIX_ONLY(ShouldNotReachHere();) return true; }
 inline bool os::numa_has_group_homing()     { AIX_ONLY(ShouldNotReachHere();) return false;  }
@@ -76,5 +77,7 @@ inline void os::PlatformMonitor::notify_all() {
   int status = pthread_cond_broadcast(cond());
   assert_status(status == 0, status, "cond_broadcast");
 }
+
+#endif // !SOLARIS
 
 #endif // OS_POSIX_OS_POSIX_INLINE_HPP

@@ -100,6 +100,7 @@ src/jdk.zipfs : jdk/src/jdk.zipfs
 src/langtools/sample : langtools/src/sample
 src/linux : jdk/src/linux
 src/sample : jdk/src/sample
+src/solaris : jdk/src/solaris
 src/hotspot/share : hotspot/src/share/vm
 src/hotspot/cpu/aarch64 : hotspot/src/cpu/aarch64/vm
 src/hotspot/cpu/arm : hotspot/src/cpu/arm/vm
@@ -112,6 +113,7 @@ src/hotspot/os/bsd : hotspot/src/os/bsd/vm
 src/hotspot/os/linux : hotspot/src/os/linux/vm
 src/hotspot/os/posix/dtrace : hotspot/src/os/posix/dtrace
 src/hotspot/os/posix : hotspot/src/os/posix/vm
+src/hotspot/os/solaris : hotspot/src/os/solaris/vm
 src/hotspot/os/windows : hotspot/src/os/windows/vm
 src/hotspot/os_cpu/aix_ppc : hotspot/src/os_cpu/aix_ppc/vm
 src/hotspot/os_cpu/bsd_x86 : hotspot/src/os_cpu/bsd_x86/vm
@@ -122,6 +124,7 @@ src/hotspot/os_cpu/linux_ppc : hotspot/src/os_cpu/linux_ppc/vm
 src/hotspot/os_cpu/linux_s390 : hotspot/src/os_cpu/linux_s390/vm
 src/hotspot/os_cpu/linux_x86 : hotspot/src/os_cpu/linux_x86/vm
 src/hotspot/os_cpu/linux_zero : hotspot/src/os_cpu/linux_zero/vm
+src/hotspot/os_cpu/solaris_x86 : hotspot/src/os_cpu/solaris_x86/vm
 src/hotspot/os_cpu/windows_x86 : hotspot/src/os_cpu/windows_x86/vm
 src/hotspot : hotspot/src
 src/utils/IdealGraphVisualizer : hotspot/src/share/tools/IdealGraphVisualizer

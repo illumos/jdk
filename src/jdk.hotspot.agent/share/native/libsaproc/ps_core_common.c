@@ -22,6 +22,8 @@
  *
  */
 
+#include <jni.h> // just include something, or else solaris compiler will complain that this file is empty
+
 #if defined(LINUX) || defined(__APPLE__)
 #include <unistd.h>
 #include <fcntl.h>

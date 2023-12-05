@@ -50,6 +50,9 @@ Java_sun_nio_ch_DatagramChannelImpl_disconnect0(JNIEnv *env, jclass clazz,
     jint fd = fdval(env, fdo);
     int rv;
 
+#if defined(__solaris__)
+    rv = connect(fd, 0, 0);
+#else
 #if defined(__APPLE__)
     // On macOS systems we use disconnectx
     rv = disconnectx(fd, SAE_ASSOCID_ANY, SAE_CONNID_ANY);
@@ -82,6 +85,8 @@ Java_sun_nio_ch_DatagramChannelImpl_disconnect0(JNIEnv *env, jclass clazz,
     if (rv < 0 && errno == EAFNOSUPPORT)
         rv = errno = 0;
 #endif // defined(_ALLBSD_SOURCE) || defined(_AIX)
+
+#endif // defined(__solaris__)
 
     if (rv < 0)
         handleSocketError(env, errno);

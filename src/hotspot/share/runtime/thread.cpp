@@ -348,6 +348,12 @@ void Thread::record_stack_base_and_size() {
   set_stack_base(os::current_stack_base());
   set_stack_size(os::current_stack_size());
 
+#ifdef SOLARIS
+  if (os::is_primordial_thread()) {
+    os::Solaris::correct_stack_boundaries_for_primordial_thread(this);
+  }
+#endif
+
   // Set stack limits after thread is initialized.
   if (is_Java_thread()) {
     as_Java_thread()->stack_overflow_state()->initialize(stack_base(), stack_end());
