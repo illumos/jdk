@@ -94,7 +94,7 @@ public class JISAutoDetect
     private static class Decoder extends CharsetDecoder {
 
         private static final String SJISName = getSJISName();
-        private static final String EUCJPName = "EUC_JP";
+        private static final String EUCJPName = getEUCJPName();
         private DelegatableDecoder detectedDecoder = null;
 
         public Decoder(Charset cs) {
@@ -222,10 +222,23 @@ public class JISAutoDetect
          * Returned Shift_JIS Charset name is OS dependent
          */
         private static String getSJISName() {
-            if (OperatingSystem.isWindows())
+            if (OperatingSystem.isSolaris())
+                return("PCK");
+            else if (OperatingSystem.isWindows())
                 return("windows-31J");
             else
                 return("Shift_JIS");
+        }
+
+        /**
+         * Returned EUC-JP Charset name is OS dependent
+         */
+
+        private static String getEUCJPName() {
+            if (OperatingSystem.isSolaris())
+                return("x-eucjp-open");
+            else
+                return("EUC_JP");
         }
 
     }

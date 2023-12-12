@@ -37,6 +37,10 @@
 #include "gtk_interface.h"
 #include "gtk3_interface.h"
 
+#ifndef MAX
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#endif
+
 int DEBUG_SCREENCAST_ENABLED = FALSE;
 
 #define EXCEPTION_CHECK_DESCRIBE() if ((*env)->ExceptionCheck(env)) { \
