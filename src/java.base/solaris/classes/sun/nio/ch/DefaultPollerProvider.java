@@ -34,11 +34,11 @@ class DefaultPollerProvider extends PollerProvider {
 
     @Override
     Poller readPoller() throws IOException {
-        return new DevPollPoller(true);
+        return new SolarisEventPortPoller(true);
     }
 
     @Override
     Poller writePoller() throws IOException {
-        return new DevPollPoller(false);
+        return new SolarisEventPortPoller(false);
     }
 }

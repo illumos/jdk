@@ -63,6 +63,10 @@ class SolarisEventPort
     static final short PORT_SOURCE_USER     = 3;
     static final short PORT_SOURCE_FD       = 4;
 
+    // events (sys/poll.h)
+    static final int POLLIN  = 0x0001;
+    static final int POLLOUT = 0x0004;
+
     // file descriptor to event port.
     private final int port;
 
@@ -246,7 +250,8 @@ class SolarisEventPort
     static native int port_get(int port, long address) throws IOException;
 
     /**
-     * Retrieves at most {@code max} events from a port.
+     * Retrieves at most {@code max} events from a port. A time-out of {@code < 0} means
+     * never time-out.
      */
     static native int port_getn(int port, long address, int max, long timeout)
         throws IOException;
