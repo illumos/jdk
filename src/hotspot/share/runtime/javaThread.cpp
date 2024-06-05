@@ -23,6 +23,7 @@
  *
  */
 
+#include <alloca.h>
 #include "precompiled.hpp"
 #include "cds/dynamicArchive.hpp"
 #include "ci/ciEnv.hpp"

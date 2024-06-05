@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "memory/allocation.inline.hpp"
 #include "gc/g1/g1Analytics.hpp"
 #include "gc/g1/g1AnalyticsSequences.inline.hpp"
 #include "gc/g1/g1Predictions.hpp"

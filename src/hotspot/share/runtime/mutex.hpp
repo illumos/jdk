@@ -28,7 +28,7 @@
 #include "memory/allocation.hpp"
 #include "runtime/atomic.hpp"
 
-#if defined(LINUX) || defined(AIX) || defined(BSD)
+#if defined(LINUX) || defined(AIX) || defined(BSD) || defined(SOLARIS)
 # include "mutex_posix.hpp"
 #else
 # include OS_HEADER(mutex)

@@ -931,6 +931,8 @@ public class Config {
             if (name == null) {
                 name = "c:\\winnt\\krb5.ini";
             }
+        } else if (OperatingSystem.isSolaris()) {
+            name =  "/etc/krb5/krb5.conf";
         } else if (OperatingSystem.isMacOS()) {
             name = findMacosConfigFile();
         } else {

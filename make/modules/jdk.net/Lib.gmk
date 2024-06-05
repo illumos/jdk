@@ -36,6 +36,7 @@ ifeq ($(call isTargetOs, linux macosx windows aix), true)
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LIBS_unix := -ljava, \
+      LIBS_solaris := -lsocket, \
       LIBS_linux := -ljvm, \
       LIBS_windows := jvm.lib ws2_32.lib $(WIN_JAVA_LIB), \
   ))
