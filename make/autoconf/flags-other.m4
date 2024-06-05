@@ -51,6 +51,8 @@ AC_DEFUN([FLAGS_SETUP_STRIPFLAGS],
   # FIXME: we should really only export STRIPFLAGS from here, not POST_STRIP_CMD.
   if test "x$OPENJDK_TARGET_OS" = xlinux; then
     STRIPFLAGS="-g"
+  elif test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    STRIPFLAGS="-x"
   elif test "x$OPENJDK_TARGET_OS" = xmacosx; then
     STRIPFLAGS="-S"
   elif test "x$OPENJDK_TARGET_OS" = xaix; then

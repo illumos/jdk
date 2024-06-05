@@ -871,6 +871,10 @@ endif
 
 BUILD_HOTSPOT_JTREG_EXECUTABLES_LIBS_exesigtest := -ljvm
 
+ifeq ($(call isTargetOs, solaris), true)
+    BUILD_HOTSPOT_JTREG_EXCLUDE += libterminatedThread.c
+endif
+
 ifeq ($(call isTargetOs, windows), true)
     BUILD_HOTSPOT_JTREG_EXECUTABLES_CFLAGS_exeFPRegs := -MT
     BUILD_HOTSPOT_JTREG_EXCLUDE += exesigtest.c libterminatedThread.c libTestJNI.c libnativeStack.c

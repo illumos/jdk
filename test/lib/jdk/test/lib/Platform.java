@@ -128,6 +128,10 @@ public class Platform {
         return isOs("mac");
     }
 
+    public static boolean isSolaris() {
+        return isOs("sunos");
+    }
+
     public static boolean isWindows() {
         return isOs("win");
     }
@@ -223,6 +227,11 @@ public class Platform {
         return isArch("s390.*") || isArch("s/390.*") || isArch("zArch_64");
     }
 
+    // Returns true for sparc and sparcv9.
+    public static boolean isSparc() {
+        return isArch("sparc.*");
+    }
+
     public static boolean isX64() {
         // On OSX it's 'x86_64' and on other (Linux and Windows) platforms it's 'amd64'
         return isArch("(amd64)|(x86_64)");
@@ -251,6 +260,8 @@ public class Platform {
         }
         if (isAix()) {
             return false; // SA not implemented.
+        } else if (isSolaris()) {
+            return false; // Testing disabled due to JDK-8193639.
         } else if (isLinux()) {
             if (isS390x() || isARM()) {
                 return false; // SA not implemented.
@@ -424,6 +435,7 @@ public class Platform {
                 isServer() &&
                 (isLinux()   ||
                  isOSX()     ||
+                 isSolaris() ||
                  isWindows()) &&
                 !isZero()    &&
                 !isMinimal() &&
@@ -434,6 +446,6 @@ public class Platform {
      * This should match the #if condition in ClassListParser::load_class_from_source().
      */
     public static boolean areCustomLoadersSupportedForCDS() {
-        return (is64bit() && (isLinux() || isOSX()));
+        return (is64bit() && (isLinux() || isSolaris() || isOSX()));
     }
 }

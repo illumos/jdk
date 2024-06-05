@@ -46,7 +46,7 @@ fi
 
 OS=`uname -s`
 case "$OS" in
-    Linux | Darwin | AIX )
+    SunOS | Linux | Darwin | AIX )
         FILESEP="/"
         PATHSEP=":"
         ;;

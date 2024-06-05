@@ -38,6 +38,7 @@ public class OSInfo {
     public static enum OSType {
         WINDOWS,
         LINUX,
+        SOLARIS,
         MACOSX,
         AIX,
         UNKNOWN
@@ -97,6 +98,10 @@ public class OSInfo {
 
             if (osName.contains("Linux")) {
                 return LINUX;
+            }
+
+            if (osName.contains("Solaris") || osName.contains("SunOS")) {
+                return SOLARIS;
             }
 
             if (osName.contains("OS X")) {

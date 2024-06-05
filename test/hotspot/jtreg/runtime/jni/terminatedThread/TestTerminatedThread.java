@@ -25,13 +25,16 @@ import java.lang.management.*;
 /*
  * @test
  * @bug     8205878 8206954
- * @requires os.family != "windows"
+ * @requires os.family != "windows" & os.family != "solaris"
  * @comment Calling pthread_getcpuclockid() with invalid pid leads to undefined
  * behavior in musl libc (see 8240187).
  * @requires !vm.musl
  * @summary Basic test of Thread and ThreadMXBean queries on a natively
  *          attached thread that has failed to detach before terminating.
- * @comment The native code only supports POSIX so no windows testing
+ * @comment The native code only supports POSIX so no windows testing; also
+ *          we have to skip solaris as a terminating thread that fails to
+ *          detach will hit an infinite loop due to TLS destructor issues - see
+ *          comments in JDK-8156708
  * @run main/othervm/native TestTerminatedThread
  */
 

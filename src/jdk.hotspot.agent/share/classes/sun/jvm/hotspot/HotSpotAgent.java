@@ -41,6 +41,7 @@ import sun.jvm.hotspot.debugger.MachineDescriptionIntelX86;
 import sun.jvm.hotspot.debugger.NoSuchSymbolException;
 import sun.jvm.hotspot.debugger.bsd.BsdDebuggerLocal;
 import sun.jvm.hotspot.debugger.linux.LinuxDebuggerLocal;
+import sun.jvm.hotspot.debugger.proc.ProcDebuggerLocal;
 import sun.jvm.hotspot.debugger.remote.RemoteDebugger;
 import sun.jvm.hotspot.debugger.remote.RemoteDebuggerClient;
 import sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer;
@@ -362,7 +363,9 @@ public class HotSpotAgent {
                 } catch (UnsupportedPlatformException e) {
                    throw new DebuggerException(e);
                 }
-                if (os.equals("win32")) {
+                if (os.equals("solaris")) {
+                    setupDebuggerSolaris();
+                } else if (os.equals("win32")) {
                     setupDebuggerWin32();
                 } else if (os.equals("linux")) {
                     setupDebuggerLinux();
@@ -414,7 +417,11 @@ public class HotSpotAgent {
         // configure the VM.
 
         try {
-            if (os.equals("win32")) {
+            if (os.equals("solaris")) {
+                db = new HotSpotTypeDataBase(machDesc,
+                new HotSpotSolarisVtblAccess(debugger, jvmLibNames),
+                debugger, jvmLibNames);
+            } else if (os.equals("win32")) {
                 db = new HotSpotTypeDataBase(machDesc,
                 new Win32VtblAccess(debugger, jvmLibNames),
                 debugger, jvmLibNames);
@@ -499,6 +506,29 @@ public class HotSpotAgent {
         System.err.println("Loaded alternate HotSpot SA Debugger: " + alternateName);
     }
 
+    //
+    // Solaris
+    //
+
+    private void setupDebuggerSolaris() {
+        setupJVMLibNamesSolaris();
+        ProcDebuggerLocal dbg = new ProcDebuggerLocal(null, true);
+        debugger = dbg;
+        attachDebugger();
+
+        // Set up CPU-dependent stuff
+        if (cpu.equals("x86")) {
+            machDesc = new MachineDescriptionIntelX86();
+        } else if (cpu.equals("amd64")) {
+            machDesc = new MachineDescriptionAMD64();
+        } else {
+            throw new DebuggerException("Solaris only supported on x86/amd64");
+        }
+
+        dbg.setMachineDescription(machDesc);
+        return;
+    }
+
     private void connectRemoteDebugger() throws DebuggerException {
         RemoteDebugger remote =
         (RemoteDebugger) RMIHelper.lookup(debugServerID);
@@ -510,7 +540,9 @@ public class HotSpotAgent {
     }
 
     private void setupJVMLibNames(String os) {
-        if (os.equals("win32")) {
+        if (os.equals("solaris")) {
+            setupJVMLibNamesSolaris();
+        } else if (os.equals("win32")) {
             setupJVMLibNamesWin32();
         } else if (os.equals("linux")) {
             setupJVMLibNamesLinux();
@@ -521,6 +553,10 @@ public class HotSpotAgent {
         } else {
             throw new RuntimeException("Unknown OS type");
         }
+    }
+
+    private void setupJVMLibNamesSolaris() {
+        jvmLibNames = new String[] { "libjvm.so" };
     }
 
     //

@@ -34,6 +34,7 @@ import java.util.Locale;
 public enum Platform {
     WINDOWS,
     LINUX,
+    SOLARIS,
     MACOS,
     AIX,
     UNKNOWN;

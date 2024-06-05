@@ -45,13 +45,33 @@
 #
 #
 
-# Single gnu makefile for linux and windows (windows requires cygwin and mingw)
+# Single gnu makefile for solaris, linux and windows (windows requires cygwin and mingw)
 
 # Default arch; it is changed below as needed.
 ARCH		= i386
 OS		= $(shell uname)
 AR		= ar
 
+## OS = SunOS ##
+ifeq		($(OS),SunOS)
+CPU             = $(shell uname -p)
+ARCH1=$(CPU:i586=i386)
+ARCH=$(ARCH1:i686=i386)
+OS		= solaris
+CC 		= cc
+CFLAGS		+= -KPIC
+ifdef LP64
+ifeq ($(ARCH),i386)
+ARCH            = amd64
+endif
+endif
+CFLAGS/amd64	+= -m64
+CFLAGS		+= $(CFLAGS/$(ARCH))
+DLDFLAGS	+= -G
+LDFLAGS         += -ldl
+OUTFLAGS	+= -o $@
+LIB_EXT		= .so
+else
 ## OS = Linux ##
 ifeq		($(OS),Linux)
 ifneq           ($(MINGW),)
@@ -145,6 +165,7 @@ LIB_EXT		= .dll
 endif   # Darwin
 endif   # AIX
 endif	# Linux
+endif	# SunOS
 
 LIBARCH		= $(ARCH)
 ifdef		LP64

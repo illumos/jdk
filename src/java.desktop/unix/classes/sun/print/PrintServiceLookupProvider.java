@@ -152,6 +152,10 @@ public class PrintServiceLookupProvider extends PrintServiceLookup
         return osname.startsWith("Mac");
     }
 
+    static boolean isSysV() {
+        return osname.equals("SunOS");
+    }
+
     static boolean isLinux() {
         return (osname.equals("Linux"));
     }
@@ -303,7 +307,7 @@ public class PrintServiceLookupProvider extends PrintServiceLookup
                 }
             }
         } else {
-            if (isMac()) {
+            if (isMac() || isSysV()) {
                 printers = getAllPrinterNamesSysV();
             } else if (isAIX()) {
                 printers = getAllPrinterNamesAIX();
@@ -487,7 +491,7 @@ public class PrintServiceLookupProvider extends PrintServiceLookup
         }
         /* fallback if nothing not having a printer at this point */
         PrintService printer = null;
-        if (isMac()) {
+        if (isMac() || isSysV()) {
             printer = getNamedPrinterNameSysV(name);
         } else if (isAIX()) {
             printer = getNamedPrinterNameAIX(name);
@@ -658,7 +662,7 @@ public class PrintServiceLookupProvider extends PrintServiceLookup
                 psuri = printerInfo[1];
             }
         } else {
-            if (isMac()) {
+            if (isMac() || isSysV()) {
                 defaultPrinter = getDefaultPrinterNameSysV();
             } else if (isAIX()) {
                 defaultPrinter = getDefaultPrinterNameAIX();
@@ -878,7 +882,7 @@ public class PrintServiceLookupProvider extends PrintServiceLookup
         ArrayList<String> results = null;
         try {
             final String[] cmd = new String[3];
-            if (isAIX()) {
+            if (isSysV() || isAIX()) {
                 cmd[0] = "/usr/bin/sh";
                 cmd[1] = "-c";
                 cmd[2] = "env LC_ALL=C " + command;

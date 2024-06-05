@@ -1532,6 +1532,10 @@ JVM_END
 #define LANG "Ljava/lang/"
 #define JLINV "Ljava/lang/invoke/"
 
+#ifdef CS
+#undef CS
+#endif
+
 #define OBJ   LANG "Object;"
 #define CLS   LANG "Class;"
 #define STRG  LANG "String;"
