@@ -35,7 +35,7 @@
 // Assume TSO.
 
 // A compiler barrier, forcing the C++ compiler to invalidate all memory assumptions
-inline void compiler_barrier() {
+static inline void compiler_barrier() {
   __asm__ volatile ("" : : : "memory");
 }
 

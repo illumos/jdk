@@ -70,7 +70,7 @@ unlock(const char* func_name, jrawMonitorID lock) {
 }
 
 static void
-wait(const char* func_name, jrawMonitorID lock, jint millis) {
+thrstat001wait(const char* func_name, jrawMonitorID lock, jint millis) {
     jvmtiError err = jvmti->RawMonitorWait(lock, (jlong)millis);
     if (err != JVMTI_ERROR_NONE) {
         printf("%s: unexpected error in RawMonitorWait: %s (%d)\n",
@@ -229,7 +229,7 @@ Java_nsk_jvmti_GetThreadState_thrstat001_checkStatus(JNIEnv *env,
             break;
         }
         lock("checkStatus", wait_lock);
-        wait("checkStatus", wait_lock, millis);
+        thrstat001wait("checkStatus", wait_lock, millis);
         unlock("checkStatus", wait_lock);
     }
 

@@ -39,7 +39,7 @@ VALID_TOOLCHAINS_all="gcc clang solstudio xlc microsoft"
 
 # These toolchains are valid on different platforms
 VALID_TOOLCHAINS_linux="gcc clang"
-VALID_TOOLCHAINS_solaris="solstudio"
+VALID_TOOLCHAINS_solaris="gcc solstudio"
 VALID_TOOLCHAINS_macosx="gcc clang"
 VALID_TOOLCHAINS_aix="xlc"
 VALID_TOOLCHAINS_windows="microsoft"
@@ -740,7 +740,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_CORE],
   #
   # Setup the assembler (AS)
   #
-  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+  if test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     UTIL_LOOKUP_PROGS(AS, as)
     if test "x$AS" = x; then
       AC_MSG_ERROR([Solaris assembler (as) is required. Please install via "pkg install pkg:/developer/assembler".])

@@ -33,11 +33,19 @@ extern "C" void _Prefetch_read (void *loc, intx interval);
 extern "C" void _Prefetch_write(void *loc, intx interval);
 
 inline void Prefetch::read(void *loc, intx interval) {
+#  ifdef SPARC_WORKS
   _Prefetch_read(loc, interval);
+#  else
+  __asm__ volatile("prefetch [%0+%1], 0" : : "r" (loc), "r" (interval) : "memory" );
+#  endif
 }
 
 inline void Prefetch::write(void *loc, intx interval) {
+#  ifdef SPARC_WORKS
   _Prefetch_write(loc, interval);
+#  else
+  __asm__ volatile("prefetch [%0+%1], 2" : : "r" (loc), "r" (interval) : "memory" );
+#  endif
 }
 
 #endif // OS_CPU_SOLARIS_SPARC_VM_PREFETCH_SOLARIS_SPARC_INLINE_HPP
