@@ -402,7 +402,12 @@ getAllConfigs (JNIEnv *env, int screen, AwtScreenDataPtr screenDataPtr) {
             xrenderLibHandle = dlopen("libXrender.so", RTLD_LAZY | RTLD_GLOBAL);
         }
 
-#if defined(_AIX)
+#if defined(__solaris__)
+        if (xrenderLibHandle == NULL) {
+            xrenderLibHandle = dlopen("libXrender.so.1",
+                                      RTLD_LAZY | RTLD_GLOBAL);
+        }
+#elif defined(_AIX)
         if (xrenderLibHandle == NULL) {
             xrenderLibHandle = dlopen("libXrender.a(libXrender.so.0)",
                                       RTLD_MEMBER | RTLD_LAZY | RTLD_GLOBAL);

@@ -45,9 +45,16 @@
 #include <sys/xattr.h>
 #endif
 
-/* For POSIX-compliant getpwuid_r */
+/* For POSIX-compliant getpwuid_r, getgrgid_r on Solaris */
+#if defined(__solaris__)
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
 #include <pwd.h>
 #include <grp.h>
+
+#ifdef __solaris__
+#include <strings.h>
+#endif
 
 #ifdef __linux__
 #include <sys/syscall.h>
@@ -375,7 +382,8 @@ Java_sun_nio_fs_UnixNativeDispatcher_init(JNIEnv* env, jclass this)
 
     /* system calls that might not be available at run time */
 
-#if defined(_ALLBSD_SOURCE)
+#if (defined(__solaris__) && defined(_LP64)) || defined(_ALLBSD_SOURCE)
+    /* Solaris 64-bit does not have openat64/fstatat64 */
     my_openat64_func = (openat64_func*)dlsym(RTLD_DEFAULT, "openat");
     my_fstatat64_func = (fstatat64_func*)dlsym(RTLD_DEFAULT, "fstatat");
 #else
@@ -490,6 +498,40 @@ Java_sun_nio_fs_UnixNativeDispatcher_dup(JNIEnv* env, jclass this, jint fd) {
         throwUnixException(env, errno);
     }
     return (jint)res;
+}
+
+JNIEXPORT jlong JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_fopen0(JNIEnv* env, jclass this,
+    jlong pathAddress, jlong modeAddress)
+{
+    FILE* fp = NULL;
+    const char* path = (const char*)jlong_to_ptr(pathAddress);
+    const char* mode = (const char*)jlong_to_ptr(modeAddress);
+
+    do {
+        fp = fopen(path, mode);
+    } while (fp == NULL && errno == EINTR);
+
+    if (fp == NULL) {
+        throwUnixException(env, errno);
+    }
+
+    return ptr_to_jlong(fp);
+}
+
+JNIEXPORT void JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_fclose(JNIEnv* env, jclass this, jlong stream)
+{
+    FILE* fp = jlong_to_ptr(stream);
+
+    /* NOTE: fclose() wrapper is only used with read-only streams.
+     * If it ever is used with write streams, it might be better to add
+     * RESTARTABLE(fflush(fp)) before closing, to make sure the stream
+     * is completely written even if fclose() failed.
+     */
+    if (fclose(fp) == EOF && errno != EINTR) {
+        throwUnixException(env, errno);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -1264,6 +1306,33 @@ Java_sun_nio_fs_UnixNativeDispatcher_statvfs0(JNIEnv* env, jclass this,
         (*env)->SetLongField(env, attrs, attrs_f_bfree,  long_to_jlong(buf.f_bfree));
         (*env)->SetLongField(env, attrs, attrs_f_bavail, long_to_jlong(buf.f_bavail));
     }
+}
+
+JNIEXPORT jlong JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_pathconf0(JNIEnv* env, jclass this,
+    jlong pathAddress, jint name)
+{
+    long err;
+    const char* path = (const char*)jlong_to_ptr(pathAddress);
+
+    err = pathconf(path, (int)name);
+    if (err == -1) {
+        throwUnixException(env, errno);
+    }
+    return (jlong)err;
+}
+
+JNIEXPORT jlong JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_fpathconf(JNIEnv* env, jclass this,
+    jint fd, jint name)
+{
+    long err;
+
+    err = fpathconf((int)fd, (int)name);
+    if (err == -1) {
+        throwUnixException(env, errno);
+    }
+    return (jlong)err;
 }
 
 JNIEXPORT void JNICALL

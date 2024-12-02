@@ -83,7 +83,11 @@ security.provider.tbd=SunMSCAPI
 #ifdef macosx
 security.provider.tbd=Apple
 #endif
+#ifdef solaris
+security.provider.tbd=SunPKCS11 ${java.home}/conf/security/sunpkcs11-solaris.cfg
+#else
 security.provider.tbd=SunPKCS11
+#endif
 
 #
 # A list of preferred providers for specific algorithms. These providers will

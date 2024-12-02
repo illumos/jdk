@@ -27,7 +27,7 @@ include LibCommon.gmk
 
 ################################################################################
 
-ifeq ($(call isTargetOs, linux macosx windows), true)
+ifeq ($(call isTargetOs, linux macosx solaris windows), true)
 
   $(eval $(call SetupJdkLibrary, BUILD_LIBLE, \
       NAME := le, \

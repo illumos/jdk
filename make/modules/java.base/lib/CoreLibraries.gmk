@@ -26,7 +26,7 @@
 ##########################################################################################
 
 LIBVERIFY_OPTIMIZATION := HIGH
-ifeq ($(call isTargetOs, linux), true)
+ifeq ($(call isTargetOs, solaris linux), true)
   ifeq ($(COMPILE_WITH_DEBUG_SYMBOLS), true)
     LIBVERIFY_OPTIMIZATION := LOW
   endif
@@ -68,6 +68,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJAVA, \
     LDFLAGS_windows := -delayload:shell32.dll, \
     LIBS_unix := -ljvm, \
     LIBS_linux := $(LIBDL), \
+    LIBS_solaris := -lsocket -lnsl -lscf $(LIBDL), \
     LIBS_aix := $(LIBDL) $(LIBM),\
     LIBS_macosx := -framework CoreFoundation \
         -framework Foundation \
@@ -178,6 +179,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJLI, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LIBS_unix := $(LIBZ_LIBS), \
     LIBS_linux := $(LIBDL) -lpthread, \
+    LIBS_solaris := $(LIBDL), \
     LIBS_aix := $(LIBDL),\
     LIBS_macosx := -framework Cocoa -framework Security -framework ApplicationServices, \
     LIBS_windows := advapi32.lib comctl32.lib user32.lib, \

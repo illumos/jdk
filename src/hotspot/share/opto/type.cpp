@@ -905,6 +905,9 @@ void Type::assert_type_verify_empty() const {
   assert(Compile::current()->_type_verify == nullptr || Compile::current()->_type_verify->empty_cache(), "cache should have been discarded");
 }
 
+#ifdef _C
+#undef _C
+#endif
 class VerifyMeet {
 private:
   Compile* _C;

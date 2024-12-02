@@ -34,8 +34,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#ifndef SOLARIS
 // Aix does not have NUMA support but need these for compilation.
 inline bool os::numa_has_group_homing()     { AIX_ONLY(ShouldNotReachHere();) return false;  }
+#endif // !SOLARIS
 
 // Platform Mutex/Monitor implementation
 

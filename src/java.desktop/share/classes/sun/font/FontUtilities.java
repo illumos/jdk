@@ -41,6 +41,8 @@ import sun.util.logging.PlatformLogger;
  */
 public final class FontUtilities {
 
+    public static boolean isSolaris;
+
     public static boolean isLinux;
 
     public static boolean isMacOSX;
@@ -65,6 +67,8 @@ public final class FontUtilities {
             @SuppressWarnings("deprecation") // PlatformLogger.setLevel is deprecated.
             @Override
             public Object run() {
+
+                isSolaris = OSInfo.getOSType() == OSInfo.OSType.SOLARIS;
 
                 isLinux = OSInfo.getOSType() == OSInfo.OSType.LINUX;
 

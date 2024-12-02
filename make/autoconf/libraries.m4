@@ -139,13 +139,15 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   BASIC_JVM_LIBS="$LIBM"
 
   # Dynamic loading library
-  if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xaix; then
+  if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xaix; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS $LIBDL"
   fi
 
   # Threading library
   if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xaix; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lpthread"
+  elif test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lthread"
   fi
 
   # librt for legacy clock_gettime
@@ -160,6 +162,12 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   # perfstat lib
   if test "x$OPENJDK_TARGET_OS" = xaix; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lperfstat"
+  fi
+
+  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lsocket -lsched -ldoor -lnsl \
+        -lrt -lkstat"
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS $LIBCXX_JVM"
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xwindows; then

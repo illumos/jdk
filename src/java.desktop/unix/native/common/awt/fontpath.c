@@ -57,7 +57,57 @@ extern Display *awt_display;
 
 #define MAXFDIRS 512    /* Max number of directories that contain fonts */
 
-#if defined( __linux__)
+#if defined(__solaris__)
+/*
+ * This can be set in the makefile to "/usr/X11" if so desired.
+ */
+#ifndef OPENWINHOMELIB
+#define OPENWINHOMELIB "/usr/openwin/lib/"
+#endif
+
+/* This is all known Solaris X11 directories on Solaris 8, 9 and 10.
+ * It is ordered to give precedence to TrueType directories.
+ * It is needed if fontconfig is not installed or configured properly.
+ */
+static char *fullSolarisFontPath[] = {
+    OPENWINHOMELIB "X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/euro_fonts/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/iso_8859_2/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/iso_8859_5/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/iso_8859_7/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/iso_8859_8/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/iso_8859_9/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/iso_8859_13/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/iso_8859_15/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/ar/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/hi_IN.UTF-8/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/ja/X11/fonts/TT",
+    OPENWINHOMELIB "locale/ko/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/ko.UTF-8/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/KOI8-R/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/ru.ansi-1251/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/th_TH/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/zh_TW/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/zh_TW.BIG5/X11/fonts/TT",
+    OPENWINHOMELIB "locale/zh_HK.BIG5HK/X11/fonts/TT",
+    OPENWINHOMELIB "locale/zh_CN.GB18030/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/zh/X11/fonts/TrueType",
+    OPENWINHOMELIB "locale/zh.GBK/X11/fonts/TrueType",
+    OPENWINHOMELIB "X11/fonts/Type1",
+    OPENWINHOMELIB "X11/fonts/Type1/sun",
+    OPENWINHOMELIB "X11/fonts/Type1/sun/outline",
+    OPENWINHOMELIB "locale/iso_8859_2/X11/fonts/Type1",
+    OPENWINHOMELIB "locale/iso_8859_4/X11/fonts/Type1",
+    OPENWINHOMELIB "locale/iso_8859_5/X11/fonts/Type1",
+    OPENWINHOMELIB "locale/iso_8859_7/X11/fonts/Type1",
+    OPENWINHOMELIB "locale/iso_8859_8/X11/fonts/Type1",
+    OPENWINHOMELIB "locale/iso_8859_9/X11/fonts/Type1",
+    OPENWINHOMELIB "locale/iso_8859_13/X11/fonts/Type1",
+    OPENWINHOMELIB "locale/ar/X11/fonts/Type1",
+    NULL, /* terminates the list */
+};
+
+#elif defined( __linux__)
 /* All the known interesting locations we have discovered on
  * various flavors of Linux
  */
@@ -173,6 +223,14 @@ static char **getX11FontPath ()
         if (strstr(x11Path[i], ".gnome") != NULL) {
             continue;
         }
+#ifdef __solaris__
+        if (strstr(x11Path[i], "/F3/") != NULL) {
+            continue;
+        }
+        if (strstr(x11Path[i], "bitmap") != NULL) {
+            continue;
+        }
+#endif
         fontdirs[pos] = strdup(x11Path[i]);
         slen = strlen(fontdirs[pos]);
         if (slen > 0 && fontdirs[pos][slen-1] == '/') {
@@ -322,6 +380,8 @@ static char *getPlatformFontPathChars(JNIEnv *env, jboolean noType1, jboolean is
 
 #if defined(__linux__)
     knowndirs = fullLinuxFontPath;
+#elif defined(__solaris__)
+    knowndirs = fullSolarisFontPath;
 #elif defined(_AIX)
     knowndirs = fullAixFontPath;
 #endif

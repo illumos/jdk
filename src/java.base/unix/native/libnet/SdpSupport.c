@@ -27,7 +27,11 @@
 #include <sys/socket.h>
 #include <errno.h>
 
-#if defined(__linux__)
+#if defined(__solaris__)
+  #if !defined(PROTO_SDP)
+    #define PROTO_SDP       257
+  #endif
+#elif defined(__linux__)
   #if !defined(AF_INET_SDP)
     #define AF_INET_SDP     27
   #endif
@@ -51,7 +55,10 @@ static int create(JNIEnv* env)
 {
     int s;
 
-#if defined(__linux__)
+#if defined(__solaris__)
+    int domain = ipv6_available() ? AF_INET6 : AF_INET;
+    s = socket(domain, SOCK_STREAM, PROTO_SDP);
+#elif defined(__linux__)
     /**
      * IPv6 not supported by SDP on Linux
      */
