@@ -27,7 +27,8 @@ include LibCommon.gmk
 
 ################################################################################
 
-ifeq ($(call isTargetOs, solaris), true)
+ifeq ($(call isTargetOs, notsolaris), true)
+ ifeq ($(TOOLCHAIN_TYPE), solstudio)
 
   $(eval $(call SetupJdkLibrary, BUILD_LIBJ2UCRYPTO, \
       NAME := j2ucrypto, \
@@ -41,6 +42,7 @@ ifeq ($(call isTargetOs, solaris), true)
 
   TARGETS += $(BUILD_LIBJ2UCRYPTO)
 
+ endif
 endif
 
 ################################################################################

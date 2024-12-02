@@ -35,7 +35,7 @@
 #include <dlfcn.h>
 #include <link.h>
 
-extern "C" static int PICL_visit_cpu_helper(picl_nodehdl_t nodeh, void *result);
+extern "C" int PICL_visit_cpu_helper(picl_nodehdl_t nodeh, void *result);
 
 // Functions from the library we need (signatures should match those in picl.h)
 extern "C" {
@@ -221,7 +221,7 @@ public:
 };
 
 
-extern "C" static int PICL_visit_cpu_helper(picl_nodehdl_t nodeh, void *result) {
+extern "C" int PICL_visit_cpu_helper(picl_nodehdl_t nodeh, void *result) {
   return PICL::visit_cpu(nodeh, result);
 }
 
@@ -324,6 +324,14 @@ public:
 
 #ifndef _SC_L2CACHE_LINESZ
 #define _SC_L2CACHE_LINESZ      527     /* Size of L2 cache line */
+#endif
+
+#ifndef AV_HW1_IDX
+#define AV_HW1_IDX 0
+#endif
+
+#ifndef AV_HW2_IDX
+#define AV_HW2_IDX 1
 #endif
 
 void VM_Version::platform_features() {

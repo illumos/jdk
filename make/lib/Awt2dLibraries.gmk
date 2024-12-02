@@ -68,7 +68,7 @@ TARGETS += $(BUILD_LIBMLIB_IMAGE)
 
 ################################################################################
 
-ifeq ($(call And, $(call isTargetOs, solaris) $(call isTargetCpuArch, sparc)), true)
+ifeq ($(call And, $(call isTargetOs, not-solaris) $(call isTargetCpuArch, sparc)), true)
 
   # libmlib_image_v is basically built from mlib_image sources, with some additions
   # and some exclusions.
@@ -127,7 +127,7 @@ LIBAWT_EXTRA_SRC := \
     $(TOPDIR)/src/$(MODULE)/$(OPENJDK_TARGET_OS_TYPE)/native/common/awt \
     #
 
-ifeq ($(call And, $(call isTargetOs, solaris) $(call isTargetCpuArch, sparc)), true)
+ifeq ($(call And, $(call isTargetOs, not-really-solaris) $(call isTargetCpuArch, sparc)), true)
   LIBAWT_EXTRA_SRC += $(TOPDIR)/src/$(MODULE)/share/native/common/awt/medialib
 endif
 
@@ -155,7 +155,7 @@ ifeq ($(call isTargetOs, windows), true)
       #
 endif
 
-ifeq ($(call And, $(call isTargetOs, solaris) $(call isTargetCpu, sparcv9)), true)
+ifeq ($(call And, $(call isTargetOs, not-really-solaris) $(call isTargetCpu, sparcv9)), true)
   LIBAWT_EXFILES += java2d/loops/MapAccelFunc.c
 else
   LIBAWT_EXCLUDES += \
@@ -182,14 +182,14 @@ LIBAWT_EXTRA_HEADER_DIRS := \
 
 LIBAWT_CFLAGS += -D__MEDIALIB_OLD_NAMES -D__USE_J2D_NAMES $(X_CFLAGS)
 
-ifeq ($(call And, $(call isTargetOs, solaris) $(call isTargetCpu, sparcv9)), true)
+ifeq ($(call And, $(call isTargetOs, not-really-solaris) $(call isTargetCpu, sparcv9)), true)
   LIBAWT_CFLAGS += -xarch=sparcvis -DMLIB_ADD_SUFF \
       $(TOPDIR)/src/$(MODULE)/unix/native/libmlib_image/vis_$(OPENJDK_TARGET_CPU_BITS).il
 
   LIBAWT_ASFLAGS = -P -xarch=v9a
 endif
 
-ifeq ($(call isTargetOs, solaris), false)
+ifeq ($(call isTargetOs, not-really-solaris), false)
   LIBAWT_CFLAGS += -DMLIB_NO_LIBSUNMATH
 endif
 
@@ -382,7 +382,6 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBLCMS, \
     OPTIMIZATION := HIGHEST, \
     CFLAGS := $(CFLAGS_JDKLIB) \
         $(LCMS_CFLAGS), \
-    CFLAGS_solaris := -xc99=no_lib, \
     CFLAGS_windows := -DCMS_IS_WINDOWS_, \
     EXTRA_HEADER_DIRS := \
         common/awt/debug \
@@ -553,7 +552,11 @@ else
     HARFBUZZ_CFLAGS += -DHAVE_INTEL_ATOMIC_PRIMITIVES -DHB_NO_VISIBILITY
   endif
   ifeq ($(call isTargetOs, solaris), true)
+   ifeq ($(TOOLCHAIN_TYPE), gcc)
+    HARFBUZZ_CFLAGS += -DHAVE_INTEL_ATOMIC_PRIMITIVES -DHB_NO_VISIBILITY
+   else
     HARFBUZZ_CFLAGS += -DHAVE_SOLARIS_ATOMIC_OPS
+   endif
   endif
   # hb-ft.cc is not presently needed, and requires freetype 2.4.2 or later.
   LIBFONTMANAGER_EXCLUDE_FILES += libharfbuzz/hb-ft.cc
