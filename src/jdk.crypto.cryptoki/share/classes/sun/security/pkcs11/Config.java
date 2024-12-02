@@ -700,10 +700,17 @@ final class Config {
         lib = expand(lib);
         int i = lib.indexOf("/$ISA/");
         if (i != -1) {
-            // replace "/$ISA/" with "/"
+            // replace "/$ISA/" on 64-bit Solaris.
+            // On all other platforms, just turn it into a "/"
             String prefix = lib.substring(0, i);
             String suffix = lib.substring(i + 5);
-            lib = prefix + suffix;
+            if (osName.equals("SunOS") && osArch.equals("sparcv9")) {
+                lib = prefix + "/sparcv9" + suffix;
+            } else if (osName.equals("SunOS") && osArch.equals("amd64")) {
+                lib = prefix + "/amd64" + suffix;
+            } else {
+                lib = prefix + suffix;
+            }
         }
         debug(keyword + ": " + lib);
 

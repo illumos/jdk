@@ -114,13 +114,15 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   BASIC_JVM_LIBS="$LIBM"
 
   # Dynamic loading library
-  if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xaix; then
+  if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xaix; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS $LIBDL"
   fi
 
   # Threading library
   if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xaix; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lpthread"
+  elif test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lthread"
   fi
 
   # librt for legacy clock_gettime
@@ -151,6 +153,12 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lperfstat"
   fi
 
+  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lsocket -lsched -ldoor -lnsl \
+        -lrt -lkstat"
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS $LIBCXX_JVM"
+  fi
+
   if test "x$OPENJDK_TARGET_OS" = xwindows; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS kernel32.lib user32.lib gdi32.lib winspool.lib \
         comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib powrprof.lib uuid.lib \
@@ -168,6 +176,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   AC_SUBST(JVM_LIBS)
   AC_SUBST(OPENJDK_BUILD_JDKLIB_LIBS)
   AC_SUBST(OPENJDK_BUILD_JVM_LIBS)
+  AC_SUBST(GLOBAL_LIBS)
 ])
 
 ################################################################################

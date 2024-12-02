@@ -42,6 +42,9 @@
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
 #endif
+#ifdef __sun__
+#include <alloca.h>
+#endif
 
 // Declaration and definition of StubGenerator (no .hpp file).
 // For a more detailed description of the stub routine structure

@@ -98,7 +98,7 @@ public class JISAutoDetect
             (PrivilegedAction<String>) () -> System.getProperty("os.name"));
 
         private static final String SJISName = getSJISName();
-        private static final String EUCJPName = "EUC_JP";
+        private static final String EUCJPName = getEUCJPName();
         private DelegatableDecoder detectedDecoder = null;
 
         public Decoder(Charset cs) {
@@ -226,10 +226,23 @@ public class JISAutoDetect
          * Returned Shift_JIS Charset name is OS dependent
          */
         private static String getSJISName() {
-            if (osName.startsWith("Windows"))
+            if (osName.equals("Solaris") || osName.equals("SunOS"))
+                return("PCK");
+            else if (osName.startsWith("Windows"))
                 return("windows-31J");
             else
                 return("Shift_JIS");
+        }
+
+        /**
+         * Returned EUC-JP Charset name is OS dependent
+         */
+
+        private static String getEUCJPName() {
+            if (osName.equals("Solaris") || osName.equals("SunOS"))
+                return("x-eucjp-open");
+            else
+                return("EUC_JP");
         }
 
     }

@@ -28,6 +28,8 @@ import java.util.*;
 
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.runtime.solaris_x86.SolarisX86JavaThreadPDAccess;
+import sun.jvm.hotspot.runtime.solaris_amd64.SolarisAMD64JavaThreadPDAccess;
 import sun.jvm.hotspot.runtime.win32_x86.Win32X86JavaThreadPDAccess;
 import sun.jvm.hotspot.runtime.win32_amd64.Win32AMD64JavaThreadPDAccess;
 import sun.jvm.hotspot.runtime.win32_aarch64.Win32AARCH64JavaThreadPDAccess;
@@ -97,7 +99,13 @@ public class Threads {
 
         access = null;
         // FIXME: find the platform specific PD class by reflection?
-        if (os.equals("win32")) {
+        if (os.equals("solaris")) {
+            if (cpu.equals("x86")) {
+                access = new SolarisX86JavaThreadPDAccess();
+            } else if (cpu.equals("amd64")) {
+                access = new SolarisAMD64JavaThreadPDAccess();
+            }
+        } else if (os.equals("win32")) {
             if (cpu.equals("x86")) {
                 access =  new Win32X86JavaThreadPDAccess();
             } else if (cpu.equals("amd64")) {

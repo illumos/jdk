@@ -29,6 +29,10 @@
 
 BUILD_LIBFDLIBM_OPTIMIZATION := NONE
 
+ifeq ($(call isTargetOs, solaris), true)
+  BUILD_LIBFDLIBM_OPTIMIZATION := HIGH
+endif
+
 # If FDLIBM_CFLAGS is non-empty we know that we can optimize
 # fdlibm when adding those extra C flags. Currently GCC,
 # and clang only.
@@ -59,7 +63,7 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBFDLIBM, \
 ##########################################################################################
 
 LIBVERIFY_OPTIMIZATION := HIGH
-ifeq ($(call isTargetOs, linux), true)
+ifeq ($(call isTargetOs, solaris linux), true)
   ifeq ($(COMPILE_WITH_DEBUG_SYMBOLS), true)
     LIBVERIFY_OPTIMIZATION := LOW
   endif
@@ -103,6 +107,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJAVA, \
     LIBS := $(BUILD_LIBFDLIBM_TARGET), \
     LIBS_unix := -ljvm, \
     LIBS_linux := $(LIBDL), \
+    LIBS_solaris := -lsocket -lnsl -lscf $(LIBDL), \
     LIBS_aix := $(LIBDL) $(LIBM),\
     LIBS_macosx := -framework CoreFoundation \
         -framework Foundation \
@@ -211,6 +216,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJLI, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LIBS_unix := $(LIBZ_LIBS), \
     LIBS_linux := $(LIBDL) -lpthread, \
+    LIBS_solaris := $(LIBDL), \
     LIBS_aix := $(LIBDL),\
     LIBS_macosx := -framework Cocoa -framework Security -framework ApplicationServices, \
     LIBS_windows := advapi32.lib comctl32.lib user32.lib, \

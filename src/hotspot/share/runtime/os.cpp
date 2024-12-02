@@ -74,6 +74,7 @@
 
 # include <signal.h>
 # include <errno.h>
+# include <alloca.h>
 
 OSThread*         os::_starting_thread    = NULL;
 address           os::_polling_page       = NULL;
@@ -158,7 +159,7 @@ char* os::iso8601_time(jlong milliseconds_since_19700101, char* buffer, size_t b
   // No offset when dealing with UTC
   time_t UTC_to_local = 0;
   if (!utc) {
-#if defined(_ALLBSD_SOURCE) || defined(_GNU_SOURCE)
+#if defined(_ALLBSD_SOURCE) || defined(_BSD_SOURCE)
     UTC_to_local = -(time_struct.tm_gmtoff);
 #elif defined(_WINDOWS)
     long zone;
@@ -169,7 +170,7 @@ char* os::iso8601_time(jlong milliseconds_since_19700101, char* buffer, size_t b
 #endif
 
     // tm_gmtoff already includes adjustment for daylight saving
-#if !defined(_ALLBSD_SOURCE) && !defined(_GNU_SOURCE)
+#if !defined(_ALLBSD_SOURCE) && !defined(_BSD_SOURCE)
     // If daylight savings time is in effect,
     // we are 1 hour East of our time zone
     if (time_struct.tm_isdst > 0) {
