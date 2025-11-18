@@ -696,6 +696,10 @@ const intx ObjectAlignmentInBytes = 8;
   product_pd(bool, DontYieldALot,                                           \
           "Throw away obvious excess yield calls")                          \
                                                                             \
+  develop(bool, UseDetachedThreads, true,                                   \
+          "Use detached threads that are recycled upon termination "        \
+          "(for Solaris only)")                                             \
+                                                                            \
   product(bool, DisablePrimordialThreadGuardPages, false, EXPERIMENTAL,     \
                "Disable the use of stack guard pages if the JVM is loaded " \
                "on the primordial process thread")                          \
@@ -748,6 +752,10 @@ const intx ObjectAlignmentInBytes = 8;
   product(bool, FilterSpuriousWakeups, true,                                \
           "When true prevents OS-level spurious, or premature, wakeups "    \
           "from Object.wait (Ignored for Windows)")                         \
+                                                                            \
+  develop(bool, UsePthreads, false,                                         \
+          "Use pthread-based instead of libthread-based synchronization "   \
+          "(SPARC only)")                                                   \
                                                                             \
   product(bool, ReduceSignalUsage, false,                                   \
           "Reduce the use of OS signals in Java and/or the VM")             \
@@ -1672,8 +1680,10 @@ const intx ObjectAlignmentInBytes = 8;
   product(intx, ThreadPriorityPolicy, 0,                                    \
           "0 : Normal.                                                     "\
           "    VM chooses priorities that are appropriate for normal       "\
-          "    applications.                                               "\
-          "    On Windows applications are allowed to use higher native    "\
+          "    applications. On Solaris NORM_PRIORITY and above are mapped "\
+          "    to normal native priority. Java priorities below "           \
+          "    NORM_PRIORITY map to lower native priority values. On       "\
+          "    Windows applications are allowed to use higher native       "\
           "    priorities. However, with ThreadPriorityPolicy=0, VM will   "\
           "    not use the highest possible native priority,               "\
           "    THREAD_PRIORITY_TIME_CRITICAL, as it may interfere with     "\
@@ -2022,7 +2032,8 @@ const intx ObjectAlignmentInBytes = 8;
            "do not map the archive")                                        \
            range(0, 2)                                                      \
                                                                             \
-  product(size_t, ArrayAllocatorMallocLimit, (size_t)-1, EXPERIMENTAL,      \
+  product(size_t, ArrayAllocatorMallocLimit,                                \
+          SOLARIS_ONLY(64*K) NOT_SOLARIS((size_t)-1), EXPERIMENTAL,         \
           "Allocation less than this value will be allocated "              \
           "using malloc. Larger allocations will use mmap.")                \
                                                                             \

@@ -280,6 +280,8 @@ AC_DEFUN([BASIC_CHECK_TAR],
     TAR_TYPE="bsd"
   elif test "x$($TAR -v | $GREP "bsdtar")" != "x"; then
     TAR_TYPE="bsd"
+  elif test "x$OPENJDK_BUILD_OS" = "xsolaris"; then
+    TAR_TYPE="solaris"
   elif test "x$($TAR --version | $GREP "busybox")" != "x"; then
     TAR_TYPE="busybox"
   elif test "x$OPENJDK_BUILD_OS" = "xaix"; then
@@ -389,6 +391,8 @@ AC_DEFUN_ONCE([BASIC_SETUP_COMPLEX_TOOLS],
     UTIL_REQUIRE_PROGS(XATTR, xattr)
     UTIL_LOOKUP_PROGS(CODESIGN, codesign)
     UTIL_REQUIRE_PROGS(SETFILE, SetFile)
+  elif test "x$OPENJDK_TARGET_OS" = "xsolaris"; then
+    UTIL_REQUIRE_PROGS(ELFEDIT, elfedit)
   fi
   if ! test "x$OPENJDK_TARGET_OS" = "xwindows"; then
     UTIL_REQUIRE_PROGS(ULIMIT, ulimit)

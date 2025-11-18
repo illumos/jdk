@@ -82,8 +82,12 @@ class PlatformPCSC {
         String s2 = lib.substring(k + 7);
         String libDir;
         if ("64".equals(System.getProperty("sun.arch.data.model"))) {
-            // assume Linux convention
-            libDir = "lib64";
+            if ("SunOS".equals(System.getProperty("os.name"))) {
+                libDir = "lib/64";
+            } else {
+                // assume Linux convention
+                libDir = "lib64";
+            }
         } else {
             // must be 32-bit
             libDir = "lib";

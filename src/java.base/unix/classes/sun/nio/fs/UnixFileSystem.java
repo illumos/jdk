@@ -92,6 +92,10 @@ abstract class UnixFileSystem
         return rootDirectory;
     }
 
+    boolean isSolaris() {
+        return false;
+    }
+
     static List<String> standardFileAttributeViews() {
         return Arrays.asList("basic", "posix", "unix", "owner");
     }
