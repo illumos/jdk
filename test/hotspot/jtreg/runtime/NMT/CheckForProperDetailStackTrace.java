@@ -109,7 +109,7 @@ public class CheckForProperDetailStackTrace {
         // We check for that here, but allow it for Aix and Windows slowdebug builds
         // because the compiler ends up not inlining AllocateHeap.
         Boolean okToHaveAllocateHeap = Platform.isSlowDebugBuild() &&
-                                       (Platform.isAix() || Platform.isWindows());
+                                       (Platform.isAix() || Platform.isSolaris() || Platform.isWindows());
         if (!okToHaveAllocateHeap) {
             output.shouldNotContain("AllocateHeap");
         }

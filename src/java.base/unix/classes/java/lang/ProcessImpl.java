@@ -45,6 +45,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Properties;
 import jdk.internal.access.JavaIOFileDescriptorAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.util.OperatingSystem;
@@ -83,6 +84,9 @@ final class ProcessImpl extends Process {
     private /* final */ InputStream  stdout;
     private /* final */ InputStream  stderr;
 
+    // only used on Solaris
+    private /* final */ DeferredCloseInputStream stdout_inner_stream;
+
     private static enum LaunchMechanism {
         // order IS important!
         FORK,
@@ -108,6 +112,7 @@ final class ProcessImpl extends Process {
                     return lm;      // All options are valid for Linux
                 case AIX:
                 case MACOS:
+                case SOLARIS:
                     if (lm != LaunchMechanism.VFORK) {
                         return lm; // All but VFORK are valid
                     }
@@ -364,6 +369,44 @@ final class ProcessImpl extends Process {
                 });
                 break;
 
+            case SOLARIS:
+                stdin = (fds[0] == -1) ?
+                        ProcessBuilder.NullOutputStream.INSTANCE :
+                        new BufferedOutputStream(
+                            new FileOutputStream(newFileDescriptor(fds[0])));
+
+                stdout = (fds[1] == -1 || forceNullOutputStream) ?
+                         ProcessBuilder.NullInputStream.INSTANCE :
+                         new BufferedInputStream(
+                             stdout_inner_stream =
+                                 new DeferredCloseInputStream(
+                                     newFileDescriptor(fds[1])));
+
+                stderr = (fds[2] == -1) ?
+                         ProcessBuilder.NullInputStream.INSTANCE :
+                         new DeferredCloseInputStream(newFileDescriptor(fds[2]));
+
+                /*
+                 * For each subprocess forked a corresponding reaper task
+                 * is submitted.  That task is the only thread which waits
+                 * for the subprocess to terminate and it doesn't hold any
+                 * locks while doing so.  This design allows waitFor() and
+                 * exitStatus() to be safely executed in parallel (and they
+                 * need no native code).
+                 */
+                ProcessHandleImpl.completion(pid, true).handle((exitcode, throwable) -> {
+                    lock.lock();
+                    try {
+                        this.exitcode = (exitcode == null) ? -1 : exitcode.intValue();
+                        this.hasExited = true;
+                        condition.signalAll();
+                    } finally {
+                        lock.unlock();
+                    }
+                    return null;
+                });
+                break;
+
             case AIX:
                 stdin = (fds[0] == -1) ?
                         ProcessBuilder.NullOutputStream.INSTANCE :
@@ -478,6 +521,32 @@ final class ProcessImpl extends Process {
                 try { stdin.close();  } catch (IOException ignored) {}
                 try { stdout.close(); } catch (IOException ignored) {}
                 try { stderr.close(); } catch (IOException ignored) {}
+                break;
+
+            case SOLARIS:
+                // There is a risk that pid will be recycled, causing us to
+                // kill the wrong process!  So we only terminate processes
+                // that appear to still be running.  Even with this check,
+                // there is an unavoidable race condition here, but the window
+                // is very small, and OSes try hard to not recycle pids too
+                // soon, so this is quite safe.
+                lock.lock();
+                try {
+                    if (!hasExited)
+                        processHandle.destroyProcess(force);
+                } finally {
+                    lock.unlock();
+                }
+                try {
+                    stdin.close();
+                    if (stdout_inner_stream != null)
+                        stdout_inner_stream.closeDeferred(stdout);
+                    if (stderr instanceof DeferredCloseInputStream)
+                        ((DeferredCloseInputStream) stderr)
+                            .closeDeferred(stderr);
+                } catch (IOException e) {
+                    // ignore
+                }
                 break;
 
             default: throw new AssertionError("Unsupported platform: " + OperatingSystem.current());
@@ -644,6 +713,109 @@ final class ProcessImpl extends Process {
         }
     }
 
+    // A FileInputStream that supports the deferment of the actual close
+    // operation until the last pending I/O operation on the stream has
+    // finished.  This is required on Solaris because we must close the stdin
+    // and stdout streams in the destroy method in order to reclaim the
+    // underlying file descriptors.  Doing so, however, causes any thread
+    // currently blocked in a read on one of those streams to receive an
+    // IOException("Bad file number"), which is incompatible with historical
+    // behavior.  By deferring the close we allow any pending reads to see -1
+    // (EOF) as they did before.
+    //
+    private static class DeferredCloseInputStream extends PipeInputStream {
+        DeferredCloseInputStream(FileDescriptor fd) {
+            super(fd);
+        }
+
+        private Object lock = new Object();     // For the following fields
+        private boolean closePending = false;
+        private int useCount = 0;
+        private InputStream streamToClose;
+
+        private void raise() {
+            synchronized (lock) {
+                useCount++;
+            }
+        }
+
+        private void lower() throws IOException {
+            synchronized (lock) {
+                useCount--;
+                if (useCount == 0 && closePending) {
+                    streamToClose.close();
+                }
+            }
+        }
+
+        // stc is the actual stream to be closed; it might be this object, or
+        // it might be an upstream object for which this object is downstream.
+        //
+        private void closeDeferred(InputStream stc) throws IOException {
+            synchronized (lock) {
+                if (useCount == 0) {
+                    stc.close();
+                } else {
+                    closePending = true;
+                    streamToClose = stc;
+                }
+            }
+        }
+
+        public void close() throws IOException {
+            synchronized (lock) {
+                useCount = 0;
+                closePending = false;
+            }
+            super.close();
+        }
+
+        public int read() throws IOException {
+            raise();
+            try {
+                return super.read();
+            } finally {
+                lower();
+            }
+        }
+
+        public int read(byte[] b) throws IOException {
+            raise();
+            try {
+                return super.read(b);
+            } finally {
+                lower();
+            }
+        }
+
+        public int read(byte[] b, int off, int len) throws IOException {
+            raise();
+            try {
+                return super.read(b, off, len);
+            } finally {
+                lower();
+            }
+        }
+
+        public long skip(long n) throws IOException {
+            raise();
+            try {
+                return super.skip(n);
+            } finally {
+                lower();
+            }
+        }
+
+        public int available() throws IOException {
+            raise();
+            try {
+                return super.available();
+            } finally {
+                lower();
+            }
+        }
+    }
+
     /**
      * A buffered input stream for a subprocess pipe file descriptor
      * that allows the underlying file descriptor to be reclaimed when
@@ -657,7 +829,7 @@ final class ProcessImpl extends Process {
      * will block if another thread is at the same time blocked in a file
      * operation (e.g. 'read()') on the same file descriptor. We therefore
      * combine 'ProcessPipeInputStream' approach used on Linux and Bsd
-     * with the deferring 'close' of InputStream. This means
+     * with the DeferredCloseInputStream approach used on Solaris. This means
      * that every potentially blocking operation on the file descriptor
      * increments a counter before it is executed and decrements it once it
      * finishes. The 'close()' operation will only be executed if there are

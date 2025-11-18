@@ -517,7 +517,7 @@ void os::Posix::print_rlimit_info(outputStream* st) {
   st->print("%d", sysconf(_SC_CHILD_MAX));
 
   print_rlimit(st, ", THREADS", RLIMIT_THREADS);
-#else
+#elif !defined(SOLARIS)
   print_rlimit(st, ", NPROC", RLIMIT_NPROC);
 #endif
 
@@ -533,6 +533,12 @@ void os::Posix::print_rlimit_info(outputStream* st) {
   // maximum number of bytes of memory that may be locked into RAM
   // (rounded down to the nearest  multiple of system pagesize)
   print_rlimit(st, ", MEMLOCK", RLIMIT_MEMLOCK, true);
+#endif
+
+#if defined(SOLARIS)
+  // maximum size of mapped address space of a process in bytes;
+  // if the limit is exceeded, mmap and brk fail
+  print_rlimit(st, ", VMEM", RLIMIT_VMEM, true);
 #endif
 
   // MacOS; The maximum size (in bytes) to which a process's resident set size may grow.

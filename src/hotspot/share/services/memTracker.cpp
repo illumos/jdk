@@ -48,6 +48,12 @@
 #include <windows.h>
 #endif
 
+#ifdef SOLARIS
+  volatile bool NMT_stack_walkable = false;
+#else
+  volatile bool NMT_stack_walkable = true;
+#endif
+
 NMT_TrackingLevel MemTracker::_tracking_level = NMT_unknown;
 
 MemBaseline MemTracker::_baseline;

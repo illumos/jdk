@@ -39,6 +39,7 @@ public class OSInfo {
     public static enum OSType {
         WINDOWS,
         LINUX,
+        SOLARIS,
         MACOSX,
         AIX,
         UNKNOWN
@@ -95,6 +96,7 @@ public class OSInfo {
             // Map OperatingSystem enum values to OSType enum values.
             case WINDOWS -> WINDOWS;
             case LINUX -> LINUX;
+            case SOLARIS -> SOLARIS;
             case MACOS -> MACOSX;
             case AIX -> AIX;
             default -> UNKNOWN;

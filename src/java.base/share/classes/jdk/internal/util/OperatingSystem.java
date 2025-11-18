@@ -81,6 +81,10 @@ public enum OperatingSystem {
      * The AIX Operating system.
      */
     AIX,
+    /**
+     * Operating systems based on Solaris or illumos.
+     */
+    SOLARIS,
     ;
 
     // The current OperatingSystem
@@ -116,6 +120,14 @@ public enum OperatingSystem {
     @ForceInline
     public static boolean isAix() {
         return PlatformProps.TARGET_OS_IS_AIX;
+    }
+
+    /**
+     * {@return {@code true} if built for Solaris or illumos operating systems}
+     */
+    @ForceInline
+    public static boolean isSolaris() {
+        return PlatformProps.TARGET_OS_IS_SOLARIS;
     }
 
     /**

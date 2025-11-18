@@ -331,11 +331,10 @@ void handlePeerAddrChange
             break;
         case SCTP_ADDR_MADE_PRIM :
             event = sun_nio_ch_sctp_PeerAddrChange_SCTP_ADDR_MADE_PRIM;
+#ifdef __linux__  /* Solaris currently doesn't support SCTP_ADDR_CONFIRMED */
             break;
-#ifdef __linux__
         case SCTP_ADDR_CONFIRMED :
             event = sun_nio_ch_sctp_PeerAddrChange_SCTP_ADDR_CONFIRMED;
-            break;
 #endif  /* __linux__ */
     }
 

@@ -30,6 +30,7 @@ import jdk.internal.util.OperatingSystem;
 import static jdk.internal.util.OperatingSystem.AIX;
 import static jdk.internal.util.OperatingSystem.LINUX;
 import static jdk.internal.util.OperatingSystem.MACOS;
+import static jdk.internal.util.OperatingSystem.SOLARIS;
 import static jdk.internal.util.OperatingSystem.WINDOWS;
 
 import jdk.internal.util.StaticProperty;
@@ -60,6 +61,7 @@ public class OSTest {
             case "win" -> WINDOWS;
             case "lin" -> LINUX;
             case "mac" -> MACOS;
+            case "sun" -> SOLARIS;
             case "aix" -> AIX;
             default    -> fail("Unknown os.name: " + osName);
         };
@@ -75,6 +77,7 @@ public class OSTest {
                 Arguments.of(LINUX, OperatingSystem.isLinux()),
                 Arguments.of(WINDOWS, OperatingSystem.isWindows()),
                 Arguments.of(MACOS, OperatingSystem.isMacOS()),
+                Arguments.of(SOLARIS, OperatingSystem.isSolaris()),
                 Arguments.of(AIX, OperatingSystem.isAix())
         );
     }
