@@ -44,7 +44,9 @@ endif
 # Also provide an override for non-conformant libraries.
 ifeq ($(TOOLCHAIN_TYPE), gcc)
   LAUNCHER_CFLAGS += -fvisibility=hidden
+ ifneq ($(OPENJDK_TARGET_OS), solaris)
   LDFLAGS_JDKEXE += -Wl,--exclude-libs,ALL
+ endif
 else ifeq ($(TOOLCHAIN_TYPE), clang)
   ifneq ($(OPENJDK_TARGET_OS), macosx)
     LAUNCHER_CFLAGS += -fvisibility=hidden
@@ -176,7 +178,7 @@ define SetupBuildLauncherBody
           -DLAUNCHER_NAME='"$$(LAUNCHER_NAME)"' \
           -DPROGNAME='"$1"' \
           $$($1_CFLAGS), \
-      CFLAGS_solaris := -KPIC, \
+      CFLAGS_solaris := -fPIC, \
       CFLAGS_windows := $$($1_CFLAGS_windows), \
       LDFLAGS := $$(LDFLAGS_JDKEXE) \
           $$(ORIGIN_ARG) \
