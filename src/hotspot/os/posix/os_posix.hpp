@@ -134,6 +134,8 @@ private:
   sigjmp_buf _jmpbuf;
 };
 
+#ifndef SOLARIS
+
 /*
  * This is the platform-specific implementation underpinning
  * the ParkEvent class, which itself underpins Java-level monitor
@@ -298,5 +300,7 @@ class PlatformMonitor : public PlatformMutex {
   void notify();
   void notify_all();
 };
+
+#endif // !SOLARIS
 
 #endif // OS_POSIX_OS_POSIX_HPP

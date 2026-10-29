@@ -34,6 +34,7 @@ public record Platform(OperatingSystem os, Architecture arch) {
     public enum OperatingSystem {
         WINDOWS,
         LINUX,
+        SOLARIS,
         MACOS,
         AIX,
         UNKNOWN;
@@ -104,6 +105,7 @@ public record Platform(OperatingSystem os, Architecture arch) {
         OperatingSystem os = switch (osName) {
             case "win" -> OperatingSystem.WINDOWS;
             case "lin" -> OperatingSystem.LINUX;
+            case "sun" -> OperatingSystem.SOLARIS;
             case "mac" -> OperatingSystem.MACOS;
             case "aix" -> OperatingSystem.AIX;
             default    -> OperatingSystem.UNKNOWN;

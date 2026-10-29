@@ -67,6 +67,10 @@ public class UnixUserPrincipals {
             throw new AssertionError();
         }
 
+        boolean isSpecial() {
+            return id == -1;
+        }
+
         @Override
         public String getName() {
             return name;

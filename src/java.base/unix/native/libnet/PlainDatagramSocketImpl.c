@@ -27,6 +27,10 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
+#if defined(__solaris__)
+#include <sys/filio.h>
+#endif
+
 #include "net_util.h"
 
 #include "java_net_PlainDatagramSocketImpl.h"
@@ -52,6 +56,12 @@
 #define IPV4_SNDBUF_LIMIT 65507
 #define IPV6_SNDBUF_LIMIT 65527
 #endif  // __APPLE__
+
+#ifdef __solaris__
+#ifndef BSD_COMP
+#define BSD_COMP
+#endif
+#endif
 
 #ifndef IPTOS_TOS_MASK
 #define IPTOS_TOS_MASK 0x1e
@@ -493,6 +503,14 @@ Java_java_net_PlainDatagramSocketImpl_peek(JNIEnv *env, jobject this,
     n = NET_RecvFrom(fd, buf, 1, MSG_PEEK, &rmtaddr.sa, &slen);
 
     if (n == -1) {
+
+#ifdef __solaris__
+        if (errno == ECONNREFUSED) {
+            int orig_errno = errno;
+            recv(fd, buf, 1, 0);
+            errno = orig_errno;
+        }
+#endif
         if (errno == ECONNREFUSED) {
             JNU_ThrowByName(env, JNU_JAVANETPKG "PortUnreachableException",
                             "ICMP Port Unreachable");
@@ -619,6 +637,14 @@ Java_java_net_PlainDatagramSocketImpl_peekData(JNIEnv *env, jobject this,
         n = packetBufferLen;
     }
     if (n == -1) {
+
+#ifdef __solaris__
+        if (errno == ECONNREFUSED) {
+            int orig_errno = errno;
+            (void) recv(fd, fullPacket, 1, 0);
+            errno = orig_errno;
+        }
+#endif
         (*env)->SetIntField(env, packet, dp_offsetID, 0);
         (*env)->SetIntField(env, packet, dp_lengthID, 0);
         if (errno == ECONNREFUSED) {
@@ -1825,9 +1851,10 @@ Java_java_net_PlainDatagramSocketImpl_getTimeToLive(JNIEnv *env, jobject this) {
  * we must use the IPv4 socket options. This is because the IPv6 socket options
  * don't support IPv4-mapped addresses. This is true as per 2.2.19 and 2.4.7
  * kernel releases. In the future it's possible that IP_ADD_MEMBERSHIP
- * will be updated to return ENOPROTOOPT if uses with an IPv6 socket. Thus to
- * cater for this we first try with the IPv4 socket options and if they fail we
- * use the IPv6 socket options. This seems a reasonable failsafe solution.
+ * will be updated to return ENOPROTOOPT if uses with an IPv6 socket (Solaris
+ * already does this). Thus to cater for this we first try with the IPv4
+ * socket options and if they fail we use the IPv6 socket options. This
+ * seems a reasonable failsafe solution.
  */
 static void mcast_join_leave(JNIEnv *env, jobject this,
                              jobject iaObj, jobject niObj,
