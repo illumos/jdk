@@ -62,6 +62,7 @@
 #include <sys/procset.h>
 #include <ucontext.h>
 #include <setjmp.h>
+#include <inttypes.h>
 #endif // SOLARIS
 
 # ifdef SOLARIS_MUTATOR_LIBTHREAD

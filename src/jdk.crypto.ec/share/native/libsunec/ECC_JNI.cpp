@@ -39,6 +39,8 @@
 
 extern "C" {
 
+#define B_TRUE	_B_TRUE
+#define B_FALSE	_B_FALSE
 /*
  * Declare library specific JNI_Onload entry if static build
  */

@@ -128,7 +128,7 @@ else ifeq ($(call isTargetCpu, x86_64), true)
 endif
 
 # Inline assembly for solaris
-ifeq ($(call isTargetOs, solaris), true)
+ifeq ($(TOOLCHAIN_TYPE), solstudio)
   ifeq ($(call isTargetCpu, x86_64), true)
     JVM_CFLAGS += $(TOPDIR)/src/hotspot/os_cpu/solaris_x86/solaris_x86_64.il
   else ifeq ($(call isTargetCpu, sparcv9), true)

@@ -297,9 +297,8 @@ frame os::get_sender_for_C_frame(frame* fr) {
 // point into the calling threads stack, and be no lower than the current stack
 // pointer.
 address os::current_stack_pointer() {
-  volatile int dummy;
-  address sp = (address)&dummy + 8;     // %%%% need to confirm if this is right
-  return sp;
+  register void *sp __asm__ ("sp");
+  return (address)sp;
 }
 
 frame os::current_frame() {
