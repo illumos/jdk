@@ -167,6 +167,7 @@ const char* Abstract_VM_Version::vm_release() {
 
 #define OS       LINUX_ONLY("linux")             \
                  WINDOWS_ONLY("windows")         \
+                 SOLARIS_ONLY("solaris")         \
                  AIX_ONLY("aix")                 \
                  BSD_ONLY("bsd")
 

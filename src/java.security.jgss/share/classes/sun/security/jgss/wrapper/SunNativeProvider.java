@@ -91,6 +91,9 @@ public final class SunNativeProvider extends Provider {
                                 = System.getProperty("sun.security.jgss.lib");
                         if (defaultLib == null || defaultLib.trim().equals("")) {
                             gssLibs = switch (OperatingSystem.current()) {
+                                case SOLARIS -> new String[]{
+                                        "libgss.so",
+                                };
                                 case LINUX -> new String[]{
                                         "libgssapi.so",
                                         "libgssapi_krb5.so",

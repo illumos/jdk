@@ -401,6 +401,14 @@
 #define NOT_AIX(code) code
 #endif
 
+#ifdef SOLARIS
+#define SOLARIS_ONLY(code) code
+#define NOT_SOLARIS(code)
+#else
+#define SOLARIS_ONLY(code)
+#define NOT_SOLARIS(code) code
+#endif
+
 #ifdef _WINDOWS
 #define WINDOWS_ONLY(code) code
 #define NOT_WINDOWS(code)

@@ -39,14 +39,31 @@
 #include <stdlib.h>
 #include <wchar.h>
 
+#ifdef SOLARIS
+#include <ieeefp.h>
+#endif // SOLARIS
+
 #include <math.h>
 #include <time.h>
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <pthread.h>
 
+#ifdef SOLARIS
+#include <thread.h>
+#endif // SOLARIS
+
 #include <limits.h>
 #include <errno.h>
+
+#ifdef SOLARIS
+#include <sys/trap.h>
+#include <sys/regset.h>
+#include <sys/procset.h>
+#include <ucontext.h>
+#include <setjmp.h>
+#include <inttypes.h>
+#endif // SOLARIS
 
 #if defined(LINUX) || defined(_ALLBSD_SOURCE)
 #include <inttypes.h>
@@ -60,6 +77,34 @@
 #endif
 #include <sys/time.h>
 #endif // LINUX || _ALLBSD_SOURCE
+
+// 4810578: varargs unsafe on 32-bit integer/64-bit pointer architectures
+// When __cplusplus is defined, NULL is defined as 0 (32-bit constant) in
+// system header files.  On 32-bit architectures, there is no problem.
+// On 64-bit architectures, defining NULL as a 32-bit constant can cause
+// problems with varargs functions: C++ integral promotion rules say for
+// varargs, we pass the argument 0 as an int.  So, if NULL was passed to a
+// varargs function it will remain 32-bits.  Depending on the calling
+// convention of the machine, if the argument is passed on the stack then
+// only 32-bits of the "NULL" pointer may be initialized to zero.  The
+// other 32-bits will be garbage.  If the varargs function is expecting a
+// pointer when it extracts the argument, then we have a problem.
+//
+// Solution: For 64-bit architectures, redefine NULL as 64-bit constant 0.
+//
+// Note: this fix doesn't work well on Linux because NULL will be overwritten
+// whenever a system header file is included. Linux handles NULL correctly
+// through a special type '__null'.
+#ifdef SOLARIS
+  #ifdef _LP64
+    #undef NULL
+    #define NULL 0L
+  #else
+    #ifndef NULL
+      #define NULL 0
+    #endif
+  #endif
+#endif
 
 // NULL vs NULL_WORD:
 // On Linux NULL is defined as a special type '__null'. Assigning __null to
@@ -102,7 +147,15 @@ typedef unsigned int            uintptr_t;
 #endif // !LINUX && !_ALLBSD_SOURCE
 
 // checking for nanness
-#if defined(__APPLE__)
+#ifdef SOLARIS
+#ifdef SPARC
+inline int g_isnan(float  f) { return isnanf(f); }
+#else
+// isnanf() broken on Intel Solaris use isnand()
+inline int g_isnan(float  f) { return isnand(f); }
+#endif
+inline int g_isnan(double f) { return isnand(f); }
+#elif defined(__APPLE__)
 inline int g_isnan(double f) { return isnan(f); }
 #elif defined(LINUX) || defined(_ALLBSD_SOURCE)
 inline int g_isnan(float  f) { return isnan(f); }

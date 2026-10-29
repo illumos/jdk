@@ -54,7 +54,7 @@
 #endif
 #define JNI_LIB_NAME(NAME) JNI_LIB_PREFIX NAME JNI_LIB_SUFFIX
 
-#if defined(AIX)
+#if defined(AIX) || defined(SOLARIS)
 #define JVM_MAXPATHLEN MAXPATHLEN
 #else
 // Hack: MAXPATHLEN is 4095 on some Linux and 4096 on others. This may
@@ -87,6 +87,9 @@
 #define JVM_SIGTERM    SIGTERM
 
 #define BREAK_SIGNAL     SIGQUIT           /* Thread dumping support.    */
+#ifdef SOLARIS
+#define ASYNC_SIGNAL     SIGJVM2           /* Event-based suspend/resume support */
+#endif // SOLARIS
 #define SHUTDOWN1_SIGNAL SIGHUP            /* Shutdown Hooks support.    */
 #define SHUTDOWN2_SIGNAL SIGINT
 #define SHUTDOWN3_SIGNAL SIGTERM

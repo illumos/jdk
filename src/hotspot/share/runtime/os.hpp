@@ -997,6 +997,8 @@ class os: AllStatic {
   class Bsd;
 #elif defined(LINUX)
   class Linux;
+#elif defined(SOLARIS)
+  class Solaris;
 #elif defined(_WINDOWS)
   class win32;
 #endif

@@ -61,6 +61,29 @@ typedef struct _XRadialGradient {
 
 #include <dlfcn.h>
 
+#if defined(__solaris__)
+/* Solaris 10 will not have these symbols at compile time */
+
+typedef Picture (*XRenderCreateLinearGradientFuncType)
+                                     (Display *dpy,
+                                     const XLinearGradient *gradient,
+                                     const XFixed *stops,
+                                     const XRenderColor *colors,
+                                     int nstops);
+
+typedef Picture (*XRenderCreateRadialGradientFuncType)
+                                     (Display *dpy,
+                                     const XRadialGradient *gradient,
+                                     const XFixed *stops,
+                                     const XRenderColor *colors,
+                                     int nstops);
+
+static
+XRenderCreateLinearGradientFuncType XRenderCreateLinearGradientFunc = NULL;
+static
+ XRenderCreateRadialGradientFuncType XRenderCreateRadialGradientFunc = NULL;
+#endif
+
 #define BUILD_TRANSFORM_MATRIX(TRANSFORM, M00, M01, M02, M10, M11, M12)                        \
     {                                                                                          \
       TRANSFORM.matrix[0][0] = M00;                                                            \
@@ -124,6 +147,27 @@ static jboolean IsXRenderAvailable(jboolean verbose, jboolean ignoreLinuxVersion
       xrenderlib = dlopen("libXrender.a(libXrender.so.0)", RTLD_GLOBAL | RTLD_LAZY | RTLD_MEMBER);
     }
     if (xrenderlib != NULL) {
+      dlclose(xrenderlib);
+    } else {
+      available = JNI_FALSE;
+    }
+#elif defined(__solaris__)
+    xrenderlib = dlopen("libXrender.so",RTLD_GLOBAL|RTLD_LAZY);
+    if (xrenderlib != NULL) {
+
+      XRenderCreateLinearGradientFunc =
+        (XRenderCreateLinearGradientFuncType)
+        dlsym(xrenderlib, "XRenderCreateLinearGradient");
+
+      XRenderCreateRadialGradientFunc =
+        (XRenderCreateRadialGradientFuncType)
+        dlsym(xrenderlib, "XRenderCreateRadialGradient");
+
+      if (XRenderCreateLinearGradientFunc == NULL ||
+          XRenderCreateRadialGradientFunc == NULL)
+      {
+        available = JNI_FALSE;
+      }
       dlclose(xrenderlib);
     } else {
       available = JNI_FALSE;
@@ -534,7 +578,13 @@ Java_sun_java2d_xr_XRBackendNative_XRCreateLinearGradientPaintNative
       colors[i].green = pixels[i*4 + 2];
       colors[i].blue = pixels[i*4 + 3];
     }
+#ifdef __solaris__
+    if (XRenderCreateLinearGradientFunc!=NULL) {
+      gradient = (*XRenderCreateLinearGradientFunc)(awt_display, &grad, stops, colors, numStops);
+    }
+#else
     gradient = XRenderCreateLinearGradient(awt_display, &grad, stops, colors, numStops);
+#endif
     free(colors);
     free(stops);
 
@@ -612,7 +662,13 @@ Java_sun_java2d_xr_XRBackendNative_XRCreateRadialGradientPaintNative
       colors[i].green = pixels[i*4 + 2];
       colors[i].blue = pixels[i*4 + 3];
     }
+#ifdef __solaris__
+    if (XRenderCreateRadialGradientFunc != NULL) {
+        gradient = (jint) (*XRenderCreateRadialGradientFunc)(awt_display, &grad, stops, colors, numStops);
+    }
+#else
     gradient = (jint) XRenderCreateRadialGradient(awt_display, &grad, stops, colors, numStops);
+#endif
     free(colors);
     free(stops);
 
