@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "debug_util.h"
 

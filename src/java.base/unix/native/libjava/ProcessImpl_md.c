@@ -231,7 +231,12 @@ xmalloc(JNIEnv *env, size_t size)
 static const char*
 defaultPath(void)
 {
+#ifdef __solaris__
+    /* Keep xpg4 for older systems. */
+    return "/usr/xpg4/bin:/usr/bin:/usr/sbin";
+#else
     return ":/bin:/usr/bin";
+#endif
 }
 
 static const char*
@@ -489,7 +494,7 @@ __attribute_noinline__
 #endif
 
 /* vfork(2) is deprecated on Darwin */
-#ifndef __APPLE__
+#ifndef __solaris__
 static pid_t
 vforkChild(ChildStuff *c) {
     volatile pid_t resultPid;
@@ -655,7 +660,7 @@ static pid_t
 startChild(JNIEnv *env, jobject process, ChildStuff *c, const char *helperpath) {
     switch (c->mode) {
 /* vfork(2) is deprecated on Darwin*/
-      #ifndef __APPLE__
+      #ifndef __solaris__
       case MODE_VFORK:
         return vforkChild(c);
       #endif

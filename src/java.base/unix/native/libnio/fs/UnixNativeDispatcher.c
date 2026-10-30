@@ -50,9 +50,16 @@
 #include <sys/ea.h>
 #endif
 
-/* For POSIX-compliant getpwuid_r */
+/* For POSIX-compliant getpwuid_r, getgrgid_r on Solaris */
+#if defined(__solaris__)
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
 #include <pwd.h>
 #include <grp.h>
+
+#ifdef __solaris__
+#include <strings.h>
+#endif
 
 #ifdef __linux__
 #include <sys/syscall.h>
@@ -255,6 +262,106 @@ static int statx_wrapper(int dirfd, const char *restrict pathname, int flags,
 #endif
 
 /**
+ * Solaris and illumos do not have the f*xattr set of functions, so
+ * provide a reasonable facsimile here.
+ */
+#ifdef __solaris__
+ssize_t sunos_flistxattr(int fd, char* list, size_t size) {
+  int xfd = openat(fd, ".", O_RDONLY|O_XATTR);
+  DIR *dirp = fdopendir(xfd);
+  int ilist = 0;
+  int ilen = 0;
+  struct dirent *dp;
+  while ((dp = readdir(dirp)) != NULL) {
+    if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
+      ilen = strlen(dp->d_name);
+      if (size == 0) {
+	/*
+	 * size==0 means just return the total size.
+	 */
+	ilist += ilen;
+	ilist += 1;
+      } else {
+	/*
+	 * If the name won't fit, break out and exit
+	 */
+	if (ilist + ilen + 1 > size) {
+	  ilist = -1;
+	  break;
+	}
+	memcpy(list + ilist, dp->d_name, ilen);
+	ilist += ilen;
+	list[ilist] = 0;
+	ilist += 1;
+      }
+    }
+  }
+  closedir(dirp);
+  close(xfd);
+  /*
+   * If the result won't fit, return -1 and set errno to ERANGE
+   */
+  if (ilist == -1)
+    errno = ERANGE;
+  return ilist;
+}
+ssize_t sunos_fgetxattr(int fd, const char* name, void* value, size_t size) {
+  int ifd = dup(fd);
+  int gfd = openat(ifd, ".", O_RDONLY|O_XATTR);
+  int rfd = openat(gfd, name, O_RDONLY);
+  ssize_t nread;
+  int xerr = 0;
+  int nbuf[2];
+  /*
+   * return size of entry and don't do the read if size passed as 0
+   */
+  if (size == 0) {
+    struct stat lbuf;
+    fstat(rfd, &lbuf);
+    nread = (ssize_t) lbuf.st_size;
+  } else {
+    nread = read(rfd, value, size);
+    if (nread > size) {
+      nread = -1;
+      xerr = -1;
+    }
+    /*
+     * now we need to check if there's any more to read, and error
+     * out if there is as the buffer we were given is too small.
+     * if the buffer was exactly the right size this read will return zero
+     */
+    if (nread == size) {
+      if (read(rfd, &nbuf, 2) > 0) {
+	nread = -1;
+	xerr = -1;
+      }
+    }
+  }
+  close(rfd);
+  close(gfd);
+  close(ifd);
+  if (xerr == -1) {
+    errno = ERANGE;
+  }
+  return nread;
+}
+int sunos_fsetxattr(int fd, const char* name, void* value, size_t size) {
+  int xfd = openat(fd, ".", O_RDONLY|O_XATTR);
+  int wfd = openat(xfd, name, O_CREAT|O_RDWR, 0644);
+  int uerr = write(wfd, value, size);
+  close(wfd);
+  close(xfd);
+  return uerr;
+}
+int sunos_fremovexattr(int fd, const char* name) {
+  int xfd = openat(fd, ".", O_RDONLY|O_XATTR);
+  int uerr = unlinkat(xfd, name, 0);
+  close(xfd);
+  return uerr;
+}
+#endif
+
+/**
  * Call this to throw an internal UnixException when a system/library
  * call fails
  */
@@ -350,7 +457,8 @@ Java_sun_nio_fs_UnixNativeDispatcher_init(JNIEnv* env, jclass this)
     my_openat_func = (openat_func*) dlsym(RTLD_DEFAULT, "open64at");
     my_fstatat_func = (fstatat_func*) dlsym(RTLD_DEFAULT, "stat64at");
     my_fdopendir_func = (fdopendir_func*) dlsym(RTLD_DEFAULT, "fdopendir64");
-#elif defined(_ALLBSD_SOURCE)
+#elif defined(__solaris__) || defined(_ALLBSD_SOURCE)
+    /* Solaris 64-bit does not have openat64/fstatat64 */
     my_openat_func = (openat_func*) openat;
     my_fstatat_func = (fstatat_func*) fstatat;
     my_fdopendir_func = (fdopendir_func*) fdopendir;
@@ -452,6 +560,40 @@ Java_sun_nio_fs_UnixNativeDispatcher_dup(JNIEnv* env, jclass this, jint fd) {
         throwUnixException(env, errno);
     }
     return (jint)res;
+}
+
+JNIEXPORT jlong JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_fopen0(JNIEnv* env, jclass this,
+    jlong pathAddress, jlong modeAddress)
+{
+    FILE* fp = NULL;
+    const char* path = (const char*)jlong_to_ptr(pathAddress);
+    const char* mode = (const char*)jlong_to_ptr(modeAddress);
+
+    do {
+        fp = fopen(path, mode);
+    } while (fp == NULL && errno == EINTR);
+
+    if (fp == NULL) {
+        throwUnixException(env, errno);
+    }
+
+    return ptr_to_jlong(fp);
+}
+
+JNIEXPORT void JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_fclose(JNIEnv* env, jclass this, jlong stream)
+{
+    FILE* fp = jlong_to_ptr(stream);
+
+    /* NOTE: fclose() wrapper is only used with read-only streams.
+     * If it ever is used with write streams, it might be better to add
+     * RESTARTABLE(fflush(fp)) before closing, to make sure the stream
+     * is completely written even if fclose() failed.
+     */
+    if (fclose(fp) == EOF && errno != EINTR) {
+        throwUnixException(env, errno);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -1195,6 +1337,33 @@ Java_sun_nio_fs_UnixNativeDispatcher_statvfs0(JNIEnv* env, jclass this,
     }
 }
 
+JNIEXPORT jlong JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_pathconf0(JNIEnv* env, jclass this,
+    jlong pathAddress, jint name)
+{
+    long err;
+    const char* path = (const char*)jlong_to_ptr(pathAddress);
+
+    err = pathconf(path, (int)name);
+    if (err == -1) {
+        throwUnixException(env, errno);
+    }
+    return (jlong)err;
+}
+
+JNIEXPORT jlong JNICALL
+Java_sun_nio_fs_UnixNativeDispatcher_fpathconf(JNIEnv* env, jclass this,
+    jint fd, jint name)
+{
+    long err;
+
+    err = fpathconf((int)fd, (int)name);
+    if (err == -1) {
+        throwUnixException(env, errno);
+    }
+    return (jlong)err;
+}
+
 JNIEXPORT void JNICALL
 Java_sun_nio_fs_UnixNativeDispatcher_mknod0(JNIEnv* env, jclass this,
     jlong pathAddress, jint mode, jlong dev)
@@ -1409,6 +1578,8 @@ Java_sun_nio_fs_UnixNativeDispatcher_fgetxattr0(JNIEnv* env, jclass clazz,
     res = fgetxattr(fd, name, value, valueLen, 0, 0);
 #elif defined(_AIX)
     res = fgetea(fd, name, value, valueLen);
+#elif defined(__solaris__)
+    res = sunos_fgetxattr(fd, name, value, valueLen);
 #else
     throwUnixException(env, ENOTSUP);
 #endif
@@ -1432,6 +1603,8 @@ Java_sun_nio_fs_UnixNativeDispatcher_fsetxattr0(JNIEnv* env, jclass clazz,
     res = fsetxattr(fd, name, value, valueLen, 0, 0);
 #elif defined(_AIX)
     res = fsetea(fd, name, value, valueLen, 0);
+#elif defined(__solaris__)
+    res = sunos_fsetxattr(fd, name, value, valueLen);
 #else
     throwUnixException(env, ENOTSUP);
 #endif
@@ -1453,6 +1626,8 @@ Java_sun_nio_fs_UnixNativeDispatcher_fremovexattr0(JNIEnv* env, jclass clazz,
     res = fremovexattr(fd, name, 0);
 #elif defined(_AIX)
     res = fremoveea(fd, name);
+#elif defined(__solaris__)
+    res = sunos_fremovexattr(fd, name);
 #else
     throwUnixException(env, ENOTSUP);
 #endif
@@ -1474,6 +1649,8 @@ Java_sun_nio_fs_UnixNativeDispatcher_flistxattr(JNIEnv* env, jclass clazz,
     res = flistxattr(fd, list, (size_t)size, 0);
 #elif defined(_AIX)
     res = flistea(fd, list, (size_t)size);
+#elif defined(__solaris__)
+    res = sunos_flistxattr(fd, list, (size_t)size);
 #else
     throwUnixException(env, ENOTSUP);
 #endif

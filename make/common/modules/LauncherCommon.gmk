@@ -151,6 +151,7 @@ define SetupBuildLauncherBody
           -DLAUNCHER_NAME='"$$(LAUNCHER_NAME)"' \
           -DPROGNAME='"$1"' \
           $$($1_CFLAGS), \
+      CFLAGS_solaris := -fPIC, \
       EXTRA_HEADER_DIRS := java.base:libjvm, \
       JAVA_HEADERS := false, \
       DISABLED_WARNINGS_gcc := unused-function unused-variable, \
@@ -158,6 +159,7 @@ define SetupBuildLauncherBody
       LDFLAGS := $$($1_LDFLAGS), \
       LDFLAGS_linux := $$(call SET_EXECUTABLE_ORIGIN,/../lib), \
       LDFLAGS_macosx := $$(call SET_EXECUTABLE_ORIGIN,/../lib), \
+      LDFLAGS_solaris := $$(call SET_EXECUTABLE_ORIGIN,/../lib), \
       LDFLAGS_FILTER_OUT := $$($1_LDFLAGS_FILTER_OUT), \
       JDK_LIBS := $$($1_JDK_LIBS), \
       JDK_LIBS_windows := $$($1_JDK_LIBS_windows), \

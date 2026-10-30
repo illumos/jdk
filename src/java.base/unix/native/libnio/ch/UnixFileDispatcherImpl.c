@@ -33,6 +33,10 @@
 #define fdatasync fsync
 #endif
 
+#ifdef __solaris__
+#include <sys/filio.h>
+#endif
+
 #if defined(__linux__)
 #include <linux/fs.h>
 #include <sys/ioctl.h>

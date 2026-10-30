@@ -59,6 +59,15 @@
 #include <limits.h>
 #include <errno.h>
 
+#ifdef SOLARIS
+#include <sys/trap.h>
+#include <sys/regset.h>
+#include <sys/procset.h>
+#include <ucontext.h>
+#include <setjmp.h>
+#include <inttypes.h>
+#endif // SOLARIS
+
 #if defined(LINUX) || defined(_ALLBSD_SOURCE) || defined(_AIX)
 #include <signal.h>
 #ifndef __OpenBSD__
@@ -72,7 +81,10 @@
 #endif // LINUX || _ALLBSD_SOURCE
 
 // checking for nanness
-#if defined(__APPLE__)
+#ifdef SOLARIS
+inline int g_isnan(float  f) { return isnan(f); }
+inline int g_isnan(double f) { return isnan(f); }
+#elif defined(__APPLE__)
 inline int g_isnan(double f) { return isnan(f); }
 #elif defined(LINUX) || defined(_ALLBSD_SOURCE) || defined(_AIX)
 inline int g_isnan(float  f) { return isnan(f); }

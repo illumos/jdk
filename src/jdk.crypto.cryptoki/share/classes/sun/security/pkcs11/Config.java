@@ -725,10 +725,10 @@ final class Config {
         lib = expand(lib);
         int i = lib.indexOf("/$ISA/");
         if (i != -1) {
-            // replace "/$ISA/" with "/"
+            // replace "/$ISA/" with "/amd64/" on Solaris AMD64.
             String prefix = lib.substring(0, i);
             String suffix = lib.substring(i + 5);
-            lib = prefix + suffix;
+            lib = prefix + "/amd64" + suffix;
         }
         if (DEBUG) {
             System.out.println(keyword + ": " + lib);

@@ -80,6 +80,9 @@
 #ifndef PRODUCT
 #include <signal.h>
 #endif // PRODUCT
+#ifdef ASSERT
+# include <alloca.h>
+#endif // ASSERT
 
 bool              VMError::coredump_status;
 char              VMError::coredump_message[O_BUFLEN];
@@ -1922,6 +1925,8 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
       out.print_raw   ("#   Executing ");
 #if defined(LINUX) || defined(_ALLBSD_SOURCE)
       out.print_raw   ("/bin/sh -c ");
+#elif defined(SOLARIS)
+      out.print_raw   ("/usr/bin/sh -c ");
 #elif defined(_WINDOWS)
       out.print_raw   ("cmd /C ");
 #endif
@@ -1986,6 +1991,8 @@ void VM_ReportJavaOutOfMemory::doit() {
     tty->print("#   Executing ");
 #if defined(LINUX)
     tty->print  ("/bin/sh -c ");
+#elif defined(SOLARIS)
+    tty->print  ("/usr/bin/sh -c ");
 #endif
     tty->print_cr("\"%s\"...", cmd);
 

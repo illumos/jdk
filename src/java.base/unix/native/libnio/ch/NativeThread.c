@@ -40,6 +40,8 @@
 #elif defined(_AIX)
   /* Also defined in net/aix_close.c */
   #define INTERRUPT_SIGNAL (SIGRTMAX - 1)
+#elif defined(__solaris__)
+  #define INTERRUPT_SIGNAL (SIGRTMAX - 2)
 #elif defined(_ALLBSD_SOURCE)
   /* Also defined in net/bsd_close.c */
   #define INTERRUPT_SIGNAL SIGIO

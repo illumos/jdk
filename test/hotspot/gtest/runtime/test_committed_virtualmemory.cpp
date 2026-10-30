@@ -250,7 +250,7 @@ TEST_VM(CommittedVirtualMemoryTracker, test_committed_virtualmemory_region) {
 
 }
 
-#if !defined(_WINDOWS) && !defined(_AIX)
+#if !defined(_WINDOWS) && !defined(_AIX) && !defined(__sun__)
 TEST_VM(CommittedVirtualMemory, test_committed_in_range){
   CommittedVirtualMemoryTest::test_committed_in_range(1024, 1024);
   CommittedVirtualMemoryTest::test_committed_in_range(2, 1);

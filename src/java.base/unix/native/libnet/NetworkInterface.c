@@ -37,6 +37,11 @@
 #include <strings.h>
 #endif
 
+#if defined(__solaris__)
+#include <stropts.h>
+#include <sys/sockio.h>
+#endif
+
 #if defined(_ALLBSD_SOURCE)
 #include <net/ethernet.h>
 #include <net/if_dl.h>
@@ -1668,6 +1673,265 @@ static int getFlags(int sock, const char *ifname, int *flags) {
 }
 
 #endif /* _AIX */
+
+/** Solaris **/
+#if defined(__solaris__)
+
+/*
+ * Opens a socket for further ioctl calls. Tries AF_INET socket first and
+ * if it fails return AF_INET6 socket.
+ */
+static int openSocketWithFallback(JNIEnv *env, const char *ifname) {
+    int sock, alreadyV6 = 0;
+    struct lifreq if2;
+
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        if (errno == EPROTONOSUPPORT || errno == EAFNOSUPPORT) {
+            if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+                JNU_ThrowByNameWithMessageAndLastError
+                    (env, JNU_JAVANETPKG "SocketException", "IPV6 Socket creation failed");
+                return -1;
+            }
+            alreadyV6 = 1;
+        } else { // errno is not NOSUPPORT
+            JNU_ThrowByNameWithMessageAndLastError
+                (env, JNU_JAVANETPKG "SocketException", "IPV4 Socket creation failed");
+            return -1;
+        }
+    }
+
+    // Solaris requires that we have an IPv6 socket to query an  interface
+    // without an IPv4 address - check it here. POSIX 1 require the kernel to
+    // return ENOTTY if the call is inappropriate for a device e.g. the NETMASK
+    // for a device having IPv6 only address but not all devices follow the
+    // standard so fall back on any error. It's not an ecologically friendly
+    // gesture but more reliable.
+    if (!alreadyV6) {
+        memset((char *)&if2, 0, sizeof(if2));
+        strncpy(if2.lifr_name, ifname, sizeof(if2.lifr_name) - 1);
+        if (ioctl(sock, SIOCGLIFNETMASK, (char *)&if2) < 0) {
+            close(sock);
+            if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+                JNU_ThrowByNameWithMessageAndLastError
+                    (env, JNU_JAVANETPKG "SocketException", "IPV6 Socket creation failed");
+                return -1;
+            }
+        }
+    }
+
+    return sock;
+}
+
+/*
+ * Enumerates and returns all IPv4 interfaces on Solaris.
+ */
+static netif *enumIPv4Interfaces(JNIEnv *env, int sock, netif *ifs) {
+    struct lifconf ifc;
+    struct lifreq *ifreqP;
+    struct lifnum numifs;
+    char *buf = NULL;
+    unsigned i;
+
+    // call SIOCGLIFNUM to get the interface count
+    numifs.lifn_family = AF_INET;
+    numifs.lifn_flags = 0;
+    if (ioctl(sock, SIOCGLIFNUM, (char *)&numifs) < 0) {
+        JNU_ThrowByNameWithMessageAndLastError
+            (env, JNU_JAVANETPKG "SocketException", "ioctl(SIOCGLIFNUM) failed");
+        return ifs;
+    }
+
+    // call SIOCGLIFCONF to enumerate the interfaces
+    ifc.lifc_len = numifs.lifn_count * sizeof(struct lifreq);
+    CHECKED_MALLOC3(buf, char *, ifc.lifc_len);
+    ifc.lifc_buf = buf;
+    ifc.lifc_family = AF_INET;
+    ifc.lifc_flags = 0;
+    if (ioctl(sock, SIOCGLIFCONF, (char *)&ifc) < 0) {
+        JNU_ThrowByNameWithMessageAndLastError
+            (env, JNU_JAVANETPKG "SocketException", "ioctl(SIOCGLIFCONF) failed");
+        free(buf);
+        return ifs;
+    }
+
+    // iterate through each interface
+    ifreqP = ifc.lifc_req;
+    for (i = 0; i < numifs.lifn_count; i++, ifreqP++) {
+        struct sockaddr addr, *broadaddrP = NULL;
+
+        // ignore non IPv4 addresses
+        if (ifreqP->lifr_addr.ss_family != AF_INET) {
+            continue;
+        }
+
+        // save socket address
+        memcpy(&addr, &(ifreqP->lifr_addr), sizeof(struct sockaddr));
+
+        // determine broadcast address, if applicable
+        if ((ioctl(sock, SIOCGLIFFLAGS, ifreqP) == 0) &&
+            ifreqP->lifr_flags & IFF_BROADCAST) {
+
+            // restore socket address to ifreqP
+            memcpy(&(ifreqP->lifr_addr), &addr, sizeof(struct sockaddr));
+
+            // query broadcast address and set pointer to it
+            if (ioctl(sock, SIOCGLIFBRDADDR, ifreqP) == 0) {
+                broadaddrP = (struct sockaddr *)&(ifreqP->lifr_broadaddr);
+            }
+        }
+
+        // add to the list
+        ifs = addif(env, sock, ifreqP->lifr_name, ifs,
+                    &addr, broadaddrP, AF_INET, (short)ifreqP->lifr_addrlen);
+
+        // if an exception occurred we return immediately
+        if ((*env)->ExceptionOccurred(env)) {
+            free(buf);
+            return ifs;
+        }
+   }
+
+    // free buffer
+    free(buf);
+    return ifs;
+}
+
+/*
+ * Enumerates and returns all IPv6 interfaces on Solaris.
+ */
+static netif *enumIPv6Interfaces(JNIEnv *env, int sock, netif *ifs) {
+    struct lifconf ifc;
+    struct lifreq *ifreqP;
+    struct lifnum numifs;
+    char *buf = NULL;
+    unsigned i;
+
+    // call SIOCGLIFNUM to get the interface count
+    numifs.lifn_family = AF_INET6;
+    numifs.lifn_flags = 0;
+    if (ioctl(sock, SIOCGLIFNUM, (char *)&numifs) < 0) {
+        JNU_ThrowByNameWithMessageAndLastError
+            (env, JNU_JAVANETPKG "SocketException", "ioctl(SIOCGLIFNUM) failed");
+        return ifs;
+    }
+
+    // call SIOCGLIFCONF to enumerate the interfaces
+    ifc.lifc_len = numifs.lifn_count * sizeof(struct lifreq);
+    CHECKED_MALLOC3(buf, char *, ifc.lifc_len);
+    ifc.lifc_buf = buf;
+    ifc.lifc_family = AF_INET6;
+    ifc.lifc_flags = 0;
+    if (ioctl(sock, SIOCGLIFCONF, (char *)&ifc) < 0) {
+        JNU_ThrowByNameWithMessageAndLastError
+            (env, JNU_JAVANETPKG "SocketException", "ioctl(SIOCGLIFCONF) failed");
+        free(buf);
+        return ifs;
+    }
+
+    // iterate through each interface
+    ifreqP = ifc.lifc_req;
+    for (i = 0; i < numifs.lifn_count; i++, ifreqP++) {
+
+        // ignore non IPv6 addresses
+        if (ifreqP->lifr_addr.ss_family != AF_INET6) {
+            continue;
+        }
+
+        // set scope ID to interface index
+        ((struct sockaddr_in6 *)&(ifreqP->lifr_addr))->sin6_scope_id =
+            getIndex(sock, ifreqP->lifr_name);
+
+        // add to the list
+        ifs = addif(env, sock, ifreqP->lifr_name, ifs,
+                    (struct sockaddr *)&(ifreqP->lifr_addr),
+                    NULL, AF_INET6, (short)ifreqP->lifr_addrlen);
+
+        // if an exception occurred we return immediately
+        if ((*env)->ExceptionOccurred(env)) {
+            free(buf);
+            return ifs;
+        }
+    }
+
+    // free buffer
+    free(buf);
+    return ifs;
+}
+
+/*
+ * Try to get the interface index.
+ */
+static int getIndex(int sock, const char *name) {
+    struct lifreq if2;
+    memset((char *)&if2, 0, sizeof(if2));
+    strncpy(if2.lifr_name, name, sizeof(if2.lifr_name) - 1);
+
+    if (ioctl(sock, SIOCGLIFINDEX, (char *)&if2) < 0) {
+        return -1;
+    }
+
+    return if2.lifr_index;
+}
+
+/*
+ * Gets the Hardware address (usually MAC address) for the named interface.
+ * On return puts the data in buf, and returns the length, in byte, of the
+ * MAC address. Returns -1 if there is no hardware address on that interface.
+ */
+static int getMacAddress
+  (JNIEnv *env, const char *ifname, const struct in_addr *addr,
+   unsigned char *buf)
+{
+    struct lifreq if2;
+    int sock;
+
+    if ((sock = openSocketWithFallback(env, ifname)) < 0) {
+        return -1;
+    }
+
+    // Use the new (S11) SIOCGLIFHWADDR ioctl().
+    memset((char *)&if2, 0, sizeof(if2));
+    strncpy(if2.lifr_name, ifname, sizeof(if2.lifr_name) - 1);
+
+    if (ioctl(sock, SIOCGLIFHWADDR, &if2) != -1) {
+        struct sockaddr_dl *sp;
+        sp = (struct sockaddr_dl *)&if2.lifr_addr;
+        memcpy(buf, &sp->sdl_data[0], sp->sdl_alen);
+        close(sock);
+        return sp->sdl_alen;
+    }
+    close(sock);
+    return -1;
+}
+
+static int getMTU(JNIEnv *env, int sock, const char *ifname) {
+    struct lifreq if2;
+    memset((char *)&if2, 0, sizeof(if2));
+    strncpy(if2.lifr_name, ifname, sizeof(if2.lifr_name) - 1);
+
+    if (ioctl(sock, SIOCGLIFMTU, (char *)&if2) < 0) {
+        JNU_ThrowByNameWithMessageAndLastError
+            (env, JNU_JAVANETPKG "SocketException", "ioctl(SIOCGLIFMTU) failed");
+        return -1;
+    }
+
+    return if2.lifr_mtu;
+}
+
+static int getFlags(int sock, const char *ifname, int *flags) {
+    struct lifreq if2;
+    memset((char *)&if2, 0, sizeof(if2));
+    strncpy(if2.lifr_name, ifname, sizeof(if2.lifr_name) - 1);
+
+    if (ioctl(sock, SIOCGLIFFLAGS, (char *)&if2) < 0) {
+        return -1;
+    }
+
+    *flags = if2.lifr_flags;
+    return 0;
+}
+
+#endif /* __solaris__ */
 
 /** BSD **/
 #if defined(_ALLBSD_SOURCE)

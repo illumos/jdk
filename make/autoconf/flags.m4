@@ -266,6 +266,7 @@ AC_DEFUN_ONCE([FLAGS_PRE_TOOLCHAIN],
   if test "x$TOOLCHAIN_TYPE" = xgcc || test "x$TOOLCHAIN_TYPE" = xclang; then
     if test "x$OPENJDK_TARGET_CPU_ARCH" = xx86 &&
         test "x$OPENJDK_TARGET_CPU" != xx32 ||
+        test "x$OPENJDK_TARGET_CPU_ARCH" = xsparc ||
         test "x$OPENJDK_TARGET_CPU_ARCH" = xppc; then
       MACHINE_FLAG="-m${OPENJDK_TARGET_CPU_BITS}"
     fi

@@ -57,7 +57,16 @@ extern Display *awt_display;
 
 #define MAXFDIRS 512    /* Max number of directories that contain fonts */
 
-#if defined( __linux__)
+#if defined(__solaris__)
+/* These are well known Solaris 11 or illumos X11 directories.
+ */
+static char *fullSolarisFontPath[] = {
+    "/usr/share/fonts/TrueType",
+    "/usr/share/fonts/X11/Type1",
+    NULL, /* terminates the list */
+};
+
+#elif defined( __linux__)
 /* All the known interesting locations we have discovered on
  * various flavors of Linux
  */
@@ -321,6 +330,8 @@ static char *getPlatformFontPathChars(JNIEnv *env, jboolean noType1, jboolean is
 
 #if defined(__linux__)
     knowndirs = fullLinuxFontPath;
+#elif defined(__solaris__)
+    knowndirs = fullSolarisFontPath;
 #elif defined(_AIX)
     knowndirs = fullAixFontPath;
 #endif

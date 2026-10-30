@@ -42,6 +42,7 @@ ifeq ($(call isTargetOs, linux), true)
           java.base:libnio/ch, \
       JDK_LIBS := java.base:libjava java.base:libnet, \
       LIBS_linux := $(LIBDL) $(LIBPTHREAD), \
+      LIBS_solaris := -lsocket, \
   ))
 
   TARGETS += $(BUILD_LIBSCTP)

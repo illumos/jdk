@@ -57,6 +57,11 @@
   #endif
   #define statvfs statvfs64
 #endif
+
+#if defined(__solaris__) && !defined(NAME_MAX)
+  #define NAME_MAX MAXNAMLEN
+#endif
+
 /* -- Field IDs -- */
 
 static struct {

@@ -167,7 +167,7 @@ void os::check_core_dump_prerequisites(char* buffer, size_t bufferSize, bool che
 
 bool os::committed_in_range(address start, size_t size, address& committed_start, size_t& committed_size) {
 
-#ifdef _AIX
+#ifndef LINUX
   committed_start = start;
   committed_size = size;
   return true;
@@ -617,7 +617,7 @@ void os::Posix::print_rlimit_info(outputStream* st) {
   st->print("%ld", sysconf(_SC_CHILD_MAX));
 
   print_rlimit(st, ", THREADS", RLIMIT_THREADS);
-#else
+#elif !defined(SOLARIS)
   print_rlimit(st, ", NPROC", RLIMIT_NPROC);
 #endif
 
@@ -633,6 +633,12 @@ void os::Posix::print_rlimit_info(outputStream* st) {
   // maximum number of bytes of memory that may be locked into RAM
   // (rounded down to the nearest  multiple of system pagesize)
   print_rlimit(st, ", MEMLOCK", RLIMIT_MEMLOCK, true);
+#endif
+
+#if defined(SOLARIS)
+  // maximum size of mapped address space of a process in bytes;
+  // if the limit is exceeded, mmap and brk fail
+  print_rlimit(st, ", VMEM", RLIMIT_VMEM, true);
 #endif
 
   // MacOS; The maximum size (in bytes) to which a process's resident set size may grow.

@@ -117,6 +117,8 @@ NET_PlatformInit()
 
     return WSAStartup(MAKEWORD(2,2), &wsadata);
 }
+ 
+void parseExclusiveBindProperty(JNIEnv *env) {}
 
 /*
  * Since winsock doesn't have the equivalent of strerror(errno)

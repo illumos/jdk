@@ -127,7 +127,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   BASIC_JVM_LIBS="$LIBM"
 
   # Dynamic loading library
-  if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xaix; then
+  if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xaix; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS $LIBDL"
   fi
 
@@ -144,6 +144,12 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   # perfstat lib
   if test "x$OPENJDK_TARGET_OS" = xaix; then
     BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lperfstat"
+  fi
+
+  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS -lsocket -lsched -ldoor -lnsl \
+        -lkstat"
+    BASIC_JVM_LIBS="$BASIC_JVM_LIBS $LIBCXX_JVM"
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xwindows; then

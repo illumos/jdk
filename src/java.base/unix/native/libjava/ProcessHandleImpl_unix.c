@@ -44,7 +44,15 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
+/* For POSIX-compliant getpwuid_r on Solaris */
+#if defined(__solaris__)
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
 #include <pwd.h>
+
+#ifdef __solaris__
+#include <procfs.h>
+#endif
 
 #if defined(_AIX)
   #include <sys/procfs.h>
@@ -111,13 +119,18 @@
 #define WTERMSIG(status) ((status)&0x7F)
 #endif
 
+#ifdef __solaris__
 /* The child exited because of a signal.
  * The best value to return is 0x80 + signal number,
  * because that is what all Unix shells do, and because
  * it allows callers to distinguish between process exit and
  * process death by signal.
- */
+ * Unfortunately, the historical behavior on Solaris is to return
+ * the signal number, and we preserve this for compatibility. */
+#define WTERMSIG_RETURN(status) WTERMSIG(status)
+#else
 #define WTERMSIG_RETURN(status) (WTERMSIG(status) + 0x80)
+#endif
 
 /* Field id for jString 'command' in java.lang.ProcessHandleImpl.Info */
 jfieldID ProcessHandleImpl_Info_commandID;
