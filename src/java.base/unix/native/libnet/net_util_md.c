@@ -119,7 +119,9 @@ jint  IPv6_supported()
          */
         return JNI_FALSE;
     }
+#ifndef __solaris__
     close(fd);
+#endif
 
     /**
      * Linux - check if any interface has an IPv6 address.

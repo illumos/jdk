@@ -80,6 +80,9 @@
 #ifndef PRODUCT
 #include <signal.h>
 #endif // PRODUCT
+#ifdef ASSERT
+# include <alloca.h>
+#endif // ASSERT
 
 bool              VMError::coredump_status;
 char              VMError::coredump_message[O_BUFLEN];

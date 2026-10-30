@@ -258,6 +258,7 @@ public final class Services {
                 }
                 return "Windows";
             }
+            case SOLARIS: return "Solaris";
             default: throw new InternalError("missing case for " + os);
         }
     }
@@ -272,6 +273,7 @@ public final class Services {
             case ARM: return "arm";
             case S390: return "s390";
             case PPC64: return "ppc64";
+            case SPARCV9: return "sparcv9";
             case OTHER: return "other";
             default: throw new InternalError("missing case for " + arch);
         }

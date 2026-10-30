@@ -167,7 +167,7 @@ void os::check_core_dump_prerequisites(char* buffer, size_t bufferSize, bool che
 
 bool os::committed_in_range(address start, size_t size, address& committed_start, size_t& committed_size) {
 
-#ifdef _AIX
+#ifndef LINUX
   committed_start = start;
   committed_size = size;
   return true;

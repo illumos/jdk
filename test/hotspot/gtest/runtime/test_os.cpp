@@ -1139,7 +1139,7 @@ TEST_VM(os, commit_memory_or_exit) {
   EXPECT_TRUE(os::release_memory(base, size));
 }
 
-#if !defined(_AIX)
+#if !defined(_AIX) && !defined(__sun)
 
 TEST_VM(os, map_memory_to_file) {
   const char* letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

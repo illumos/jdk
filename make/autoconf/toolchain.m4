@@ -205,7 +205,11 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETERMINE_TOOLCHAIN_TYPE],
   # Linux x86_64 needs higher binutils after 8265783
   # (this really is a dependency on as version, but we take ld as a check for a general binutils version)
   if test "x$OPENJDK_TARGET_CPU" = "xx86_64"; then
-    TOOLCHAIN_MINIMUM_LD_VERSION_gcc="2.25"
+    if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+      TOOLCHAIN_MINIMUM_LD_VERSION_gcc=""
+    else
+      TOOLCHAIN_MINIMUM_LD_VERSION_gcc="2.25"
+    fi
   fi
 
   # Use indirect variable referencing

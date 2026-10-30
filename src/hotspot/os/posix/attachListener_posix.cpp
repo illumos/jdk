@@ -39,7 +39,7 @@
 #include <sys/stat.h>
 
 #if INCLUDE_SERVICES
-#ifndef AIX
+#if defined LINUX || defined BSD
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX   sizeof(sockaddr_un::sun_path)

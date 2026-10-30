@@ -548,6 +548,8 @@ void PosixSignals::unblock_error_signals() {
 #define JVM_HANDLE_XXX_SIGNAL JVM_handle_aix_signal
 #elif defined(LINUX)
 #define JVM_HANDLE_XXX_SIGNAL JVM_handle_linux_signal
+#elif defined(SOLARIS)
+#define JVM_HANDLE_XXX_SIGNAL JVM_handle_solaris_signal
 #else
 #error who are you?
 #endif

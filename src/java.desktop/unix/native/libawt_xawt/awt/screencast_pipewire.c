@@ -97,6 +97,10 @@ struct pw_properties * (*fp_pw_properties_new)(const char *key, ...);
 #include "gtk3_interface.h"
 #include "canvas.h"
 
+#ifndef MAX
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#endif
+
 int DEBUG_SCREENCAST_ENABLED = FALSE;
 
 #define EXCEPTION_CHECK_DESCRIBE() if ((*env)->ExceptionCheck(env)) { \
